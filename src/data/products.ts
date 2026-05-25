@@ -712,6 +712,26 @@ export const allProducts: Product[] = [
     productUrl: "/product/satin-bonnet-black",
     category: ["Bundles"],
   },
+
+  // === WIGS (2 products — managed via admin) ===
+  {
+    slug: "curly-wig",
+    title: "Curly Wig",
+    price: "TSh1,000,000",
+    imageUrl: "/images/products/french-curls-honey-cocoa.jpg",
+    productUrl: "/product/curly-wig",
+    category: ["Wigs"],
+    description: "Premium curly wig.",
+  },
+  {
+    slug: "french-wig",
+    title: "French Wig",
+    price: "TSh120,000",
+    imageUrl: "/images/products/french-curls-onyx-black.jpg",
+    productUrl: "/product/french-wig",
+    category: ["Wigs"],
+    description: "French curl wig. Maintain it weekly.",
+  },
 ];
 
 export const featuredSlugs = [

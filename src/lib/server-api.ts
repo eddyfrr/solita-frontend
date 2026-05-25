@@ -1,9 +1,12 @@
-const API_BASE = process.env.API_URL || "http://localhost:8000/api";
+const API_BASE =
+  process.env.API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:8000/api";
 
 async function fetchAPI<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${API_BASE}${path}`, {
-      next: { revalidate: 30 }, // revalidate every 30 seconds
+      next: { revalidate: 10 }, // revalidate every 10s — admin changes appear quickly
     });
     if (!res.ok) return null;
     const data = await res.json();
