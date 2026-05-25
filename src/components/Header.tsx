@@ -1,0 +1,206 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Search, Heart, ShoppingBag, Menu, X } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+
+const navLinks = [
+  { name: "Home", href: "/" },
+  { name: "Services", href: "/services" },
+  { name: "Shop", href: "/shop" },
+  { name: "About", href: "/about" },
+  { name: "Gallery", href: "/gallery" },
+  { name: "VIP", href: "/vip" },
+  { name: "Contact", href: "/contact" },
+  { name: "Influencers", href: "/influencer-application-form" },
+];
+
+export function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { totalItems } = useCart();
+
+  return (
+    <>
+      <header
+        className="fixed top-0 left-0 w-full z-[602]"
+        style={{ backgroundColor: "#FAF0E8", borderBottom: "1px solid rgba(139,94,60,0.1)" }}
+      >
+        <div
+          className="mx-auto flex max-w-[1340px] items-center justify-between px-[15px]"
+          style={{ height: "90px" }}
+        >
+          {/* LEFT — Desktop: nav links / Mobile: hamburger */}
+          <div className="flex flex-1 items-center">
+            {/* Mobile hamburger */}
+            <button
+              className="text-[#8B5E3C] lg:hidden"
+              aria-label="Open menu"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+
+            {/* Desktop nav links */}
+            <nav className="hidden items-center gap-[30px] lg:flex">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="text-[16px] font-normal text-[#8B5E3C] transition-colors duration-300 hover:opacity-70"
+                  style={{ fontFamily: "var(--font-jost), Jost, sans-serif" }}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* CENTER — Logo */}
+          <div className="flex shrink-0 justify-center">
+            <Link href="/" className="flex items-center gap-2">
+              <Image
+                src="/images/solita-logo.png"
+                alt="Solita Beauty Bar"
+                width={60}
+                height={60}
+                className="object-contain max-lg:h-[40px] max-lg:w-auto"
+                style={{ width: "60px", height: "60px" }}
+                priority
+              />
+              <div className="hidden sm:flex flex-col items-start">
+                <span
+                  className="text-[#8B5E3C] leading-tight"
+                  style={{
+                    fontFamily: "var(--font-playfair), Playfair Display, serif",
+                    fontSize: "22px",
+                    fontWeight: 500,
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  Solita
+                </span>
+                <span
+                  className="text-[#8B5E3C] uppercase"
+                  style={{
+                    fontFamily: "var(--font-jost), Jost, sans-serif",
+                    fontSize: "9px",
+                    letterSpacing: "0.25em",
+                    fontWeight: 400,
+                  }}
+                >
+                  Beauty Bar
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* RIGHT — Desktop: search + wishlist + cart / Mobile: cart only */}
+          <div className="flex flex-1 items-center justify-end gap-5">
+            {/* Search — desktop only */}
+            <Link
+              href="/search"
+              className="hidden text-[#8B5E3C] transition-opacity duration-300 hover:opacity-70 lg:block"
+              aria-label="Search"
+            >
+              <Search className="h-5 w-5" strokeWidth={1.5} />
+            </Link>
+
+            {/* Wishlist — desktop only */}
+            <Link
+              href="/wishlist"
+              className="hidden text-[#8B5E3C] transition-opacity duration-300 hover:opacity-70 lg:block"
+              aria-label="Wishlist"
+            >
+              <Heart className="h-5 w-5" strokeWidth={1.5} />
+            </Link>
+
+            {/* Cart — always visible */}
+            <Link
+              href="/cart"
+              className="relative text-[#8B5E3C] transition-opacity duration-300 hover:opacity-70"
+              aria-label="Cart"
+            >
+              <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#8B5E3C] text-[10px] leading-none text-white">
+                {totalItems}
+              </span>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[9999] lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Slide-in drawer */}
+          <div
+            className="absolute top-0 left-0 h-full w-[300px] shadow-xl overflow-y-auto"
+            style={{ backgroundColor: "#FAF0E8", fontFamily: "var(--font-jost), Jost, sans-serif" }}
+          >
+            {/* Close button */}
+            <div className="flex items-center justify-between px-5" style={{ height: "90px" }}>
+              <span className="text-[14px] font-medium text-[#282828] uppercase" style={{ letterSpacing: "0.1em" }}>
+                Menu
+              </span>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-[#282828]"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Nav links */}
+            <nav className="flex flex-col">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-[16px] font-normal text-[#282828] transition-colors hover:text-[#8B5E3C]"
+                  style={{
+                    padding: "14px 20px",
+                    borderBottom: "1px solid #eee",
+                  }}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </nav>
+
+            {/* Mobile search, wishlist, login */}
+            <div className="flex flex-col gap-0 border-t border-[#eee]">
+              <Link
+                href="/search"
+                className="flex items-center gap-3 text-[14px] text-[#282828] hover:text-[#8B5E3C]"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{ padding: "14px 20px", borderBottom: "1px solid #eee" }}
+              >
+                <Search className="h-4 w-4" strokeWidth={1.5} />
+                Search
+              </Link>
+              <Link
+                href="/wishlist"
+                className="flex items-center gap-3 text-[14px] text-[#282828] hover:text-[#8B5E3C]"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{ padding: "14px 20px", borderBottom: "1px solid #eee" }}
+              >
+                <Heart className="h-4 w-4" strokeWidth={1.5} />
+                Wishlist
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
