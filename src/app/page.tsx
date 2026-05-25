@@ -19,42 +19,45 @@ const fallbackGalleryImages = [
 ];
 
 export default async function Home() {
-  // Try API first, fall back to static data
+  // API-first: the admin DB is the source of truth.
+  // Static data only fills in if the API returns nothing (e.g. backend down).
   const apiFeatured = await getAPIFeaturedProducts();
   const apiCatalog = await getAPIProducts();
   const apiGallery = await getAPIGalleryPhotos();
 
-  const staticFeatured = getFeaturedProducts();
-  const staticCatalog = getCatalogProducts();
+  const formatTsh = (price: string) =>
+    `TSh${Number(price).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+  const FALLBACK_IMG = "/images/products/french-curls-honey-cocoa.jpg";
 
-  // Combine API + static, API products shown first
   const apiFeaturedMapped = apiFeatured.map((p) => ({
     slug: p.slug,
     title: p.name,
-    price: `$${p.price}`,
-    imageUrl: p.image_url || "/images/products/french-curls-honey-cocoa.jpg",
+    price: formatTsh(p.price),
+    imageUrl: p.image_url || FALLBACK_IMG,
     productUrl: `/product/${p.slug}`,
     isOutOfStock: !p.in_stock,
   }));
-  const featuredSlugs = new Set(apiFeaturedMapped.map((p) => p.slug));
-  const featuredProducts = [
-    ...apiFeaturedMapped,
-    ...staticFeatured.filter((p) => !featuredSlugs.has(p.slug)),
-  ];
-
   const apiCatalogMapped = apiCatalog.map((p) => ({
     slug: p.slug,
     title: p.name,
-    price: `$${p.price}`,
-    imageUrl: p.image_url || "/images/products/french-curls-honey-cocoa.jpg",
+    price: formatTsh(p.price),
+    imageUrl: p.image_url || FALLBACK_IMG,
     productUrl: `/product/${p.slug}`,
     isOutOfStock: !p.in_stock,
   }));
-  const catalogSlugs = new Set(apiCatalogMapped.map((p) => p.slug));
-  const catalogProducts = [
-    ...apiCatalogMapped,
-    ...staticCatalog.filter((p) => !catalogSlugs.has(p.slug)),
-  ].slice(0, 8);
+
+  // Featured: show API featured products. If admin hasn't marked any as
+  // featured, fall back to the first 8 catalog products.
+  const featuredProducts = apiFeaturedMapped.length > 0
+    ? apiFeaturedMapped
+    : apiCatalogMapped.length > 0
+      ? apiCatalogMapped.slice(0, 8)
+      : getFeaturedProducts();
+
+  // Catalog grid: full DB catalog if the API is up; static fallback otherwise.
+  const catalogProducts = apiCatalogMapped.length > 0
+    ? apiCatalogMapped.slice(0, 12)
+    : getCatalogProducts().slice(0, 12);
 
   const galleryImages = apiGallery.length > 0
     ? apiGallery.slice(0, 8).map((p) => ({
