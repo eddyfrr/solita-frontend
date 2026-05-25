@@ -14,7 +14,6 @@ const navLinks = [
   { name: "Gallery", href: "/gallery" },
   { name: "VIP", href: "/vip" },
   { name: "Contact", href: "/contact" },
-  { name: "Influencers", href: "/influencer-application-form" },
 ];
 
 export function Header() {
