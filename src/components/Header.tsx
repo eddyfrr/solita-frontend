@@ -9,7 +9,7 @@ import { useCart } from "@/context/CartContext";
 const navLinks = [
   { name: "Home", href: "/" },
   { name: "Services", href: "/services" },
-  { name: "Shop", href: "/shop" },
+  { name: "Products", href: "/shop" },
   { name: "About", href: "/about" },
   { name: "Gallery", href: "/gallery" },
   { name: "VIP", href: "/vip" },
