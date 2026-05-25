@@ -36,28 +36,36 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  let product = getProductBySlug(slug);
+
+  // API first — admin DB is the source of truth.
+  const apiProduct = await getAPIProduct(slug);
+  const staticProduct = getProductBySlug(slug);
+
+  let product: Product | undefined;
   let extraImageUrls: string[] = [];
 
-  // If not in static data, try the API
-  if (!product) {
-    const apiProduct = await getAPIProduct(slug);
-    if (apiProduct) {
-      product = {
-        slug: apiProduct.slug,
-        title: apiProduct.name,
-        price: `TSh${apiProduct.price}`,
-        imageUrl: apiProduct.image_url || "/images/products/french-curls-honey-cocoa.jpg",
-        productUrl: `/product/${apiProduct.slug}`,
-        isOutOfStock: !apiProduct.in_stock,
-        description: apiProduct.description || "",
-        category: apiProduct.category ? [apiProduct.category.name] : [],
-        lengthOptions: [],
-      };
-      extraImageUrls = (apiProduct.images ?? [])
-        .filter((img) => img.image_url && img.image_url !== apiProduct.image_url)
-        .map((img) => img.image_url);
-    }
+  if (apiProduct) {
+    const fallbackImg = staticProduct?.imageUrl || "/images/products/french-curls-honey-cocoa.jpg";
+    product = {
+      slug: apiProduct.slug,
+      title: apiProduct.name,
+      price: `TSh${Number(apiProduct.price).toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+      imageUrl: apiProduct.image_url || fallbackImg,
+      secondaryImageUrl: staticProduct?.secondaryImageUrl,
+      productUrl: `/product/${apiProduct.slug}`,
+      isOutOfStock: !apiProduct.in_stock,
+      description: apiProduct.description || staticProduct?.description || "",
+      category: apiProduct.category
+        ? [apiProduct.category.name]
+        : staticProduct?.category ?? [],
+      // Keep length options from static — admin doesn't currently model them.
+      lengthOptions: staticProduct?.lengthOptions ?? [],
+    };
+    extraImageUrls = (apiProduct.images ?? [])
+      .filter((img) => img.image_url && img.image_url !== apiProduct.image_url)
+      .map((img) => img.image_url);
+  } else if (staticProduct) {
+    product = staticProduct;
   }
 
   if (!product) {

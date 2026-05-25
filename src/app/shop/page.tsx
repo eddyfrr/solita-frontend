@@ -3,10 +3,13 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { allProducts } from "@/data/products";
-import { getAPIProducts } from "@/lib/server-api";
+import { getAPIProducts, getAPICategories } from "@/lib/server-api";
 
 export default async function ShopPage() {
-  const apiProducts = await getAPIProducts();
+  const [apiProducts, apiCategories] = await Promise.all([
+    getAPIProducts(),
+    getAPICategories(),
+  ]);
 
   const apiMapped = apiProducts.map((p) => ({
     slug: p.slug,
@@ -57,7 +60,7 @@ export default async function ShopPage() {
             Shop
           </h1>
 
-          {/* Category Filters */}
+          {/* Category Filters — driven by the admin DB */}
           <nav
             className="mb-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2"
             style={{ fontSize: "14px" }}
@@ -69,27 +72,16 @@ export default async function ShopPage() {
             >
               All Products
             </Link>
-            <Link
-              href="/product-category/bundles"
-              style={{ color: "#686868" }}
-              className="transition-colors hover:text-[#8B5E3C]"
-            >
-              Bundles
-            </Link>
-            <Link
-              href="/product-category/crochet-braids"
-              style={{ color: "#686868" }}
-              className="transition-colors hover:text-[#8B5E3C]"
-            >
-              Crochet Braids
-            </Link>
-            <Link
-              href="/product-category/human-hair"
-              style={{ color: "#686868" }}
-              className="transition-colors hover:text-[#8B5E3C]"
-            >
-              Human Hair
-            </Link>
+            {apiCategories.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/product-category/${cat.slug}`}
+                style={{ color: "#686868" }}
+                className="transition-colors hover:text-[#8B5E3C]"
+              >
+                {cat.name}
+              </Link>
+            ))}
           </nav>
 
           {/* Sort & Count Bar */}
