@@ -36,7 +36,7 @@ export default function CheckoutPage() {
     (sum, item) => sum + getNumericPrice(item.price) * item.quantity,
     0
   );
-  const shipping = 0; // Free shipping
+  const shipping: number = 0; // Free shipping
   const total = subtotal + shipping;
 
   const canProceed = fullName.trim() && email.trim() && phone.trim() && address.trim() && city.trim();
