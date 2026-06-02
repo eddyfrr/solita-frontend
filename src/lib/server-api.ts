@@ -3,6 +3,26 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   "http://localhost:8000/api";
 
+// The backend serializes Cloudinary URLs as http://; upgrade them to https://
+// so images aren't blocked as mixed content on the live HTTPS site.
+function upgradeCloudinaryUrls<T>(value: T): T {
+  if (typeof value === "string") {
+    return value.replace(
+      /^http:\/\/res\.cloudinary\.com/,
+      "https://res.cloudinary.com",
+    ) as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map(upgradeCloudinaryUrls) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, upgradeCloudinaryUrls(v)]),
+    ) as T;
+  }
+  return value;
+}
+
 async function fetchAPI<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${API_BASE}${path}`, {
@@ -11,7 +31,8 @@ async function fetchAPI<T>(path: string): Promise<T | null> {
     if (!res.ok) return null;
     const data = await res.json();
     // DRF pagination wraps results
-    return data.results !== undefined ? data.results : data;
+    const unwrapped = data.results !== undefined ? data.results : data;
+    return upgradeCloudinaryUrls(unwrapped);
   } catch {
     return null;
   }
