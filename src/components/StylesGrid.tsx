@@ -69,7 +69,7 @@ export function StylesGrid({
                 VIP
               </span>
             )}
-            <div className="relative overflow-hidden" style={{ aspectRatio: "4/3" }}>
+            <div className="relative overflow-hidden" style={{ aspectRatio: "3/4" }}>
               {style.images && style.images.length > 0 ? (
                 <Carousel
                   images={[
@@ -78,7 +78,7 @@ export function StylesGrid({
                       .filter((src) => src !== style.imageUrl)
                       .map((src) => ({ src, alt: style.name })),
                   ]}
-                  aspectRatio="4/3"
+                  aspectRatio="3/4"
                 />
               ) : (
                 <Image

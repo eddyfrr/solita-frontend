@@ -372,7 +372,7 @@ export default function BookingPage({
           >
             <div
               className="relative overflow-hidden shrink-0"
-              style={{ width: 120, height: 90, borderRadius: 8 }}
+              style={{ width: 120, height: 160, borderRadius: 8 }}
             >
               <Image
                 src={style.imageUrl}
