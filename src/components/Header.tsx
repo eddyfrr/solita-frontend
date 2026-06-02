@@ -119,7 +119,7 @@ export function Header() {
             <Link
               href="/cart"
               className="relative text-[#8B5E3C] transition-opacity duration-300 hover:opacity-70"
-              aria-label="Cart"
+              aria-label={`Cart, ${totalItems} item${totalItems === 1 ? "" : "s"}`}
             >
               <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
               <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#8B5E3C] text-[10px] leading-none text-white">
