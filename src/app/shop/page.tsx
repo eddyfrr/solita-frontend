@@ -44,7 +44,7 @@ export default async function ShopPage() {
               Home
             </Link>
             <span className="mx-2">/</span>
-            <span style={{ color: "#282828" }}>Shop</span>
+            <span style={{ color: "#282828" }}>Products</span>
           </nav>
 
           {/* Page Heading */}
@@ -57,7 +57,7 @@ export default async function ShopPage() {
               fontFamily: "var(--font-playfair), Playfair Display, serif",
             }}
           >
-            Shop
+            Products
           </h1>
 
           {/* Category Filters — driven by the admin DB */}
