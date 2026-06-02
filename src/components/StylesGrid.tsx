@@ -69,7 +69,10 @@ export function StylesGrid({
                 VIP
               </span>
             )}
-            <div className="relative overflow-hidden" style={{ aspectRatio: "3/4" }}>
+            <div
+              className="relative overflow-hidden"
+              style={{ aspectRatio: "3/4", backgroundColor: "#f6f1ea" }}
+            >
               {style.images && style.images.length > 0 ? (
                 <Carousel
                   images={[
@@ -85,7 +88,7 @@ export function StylesGrid({
                   src={style.imageUrl}
                   alt={style.name}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-contain transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
               )}

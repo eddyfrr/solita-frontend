@@ -55,13 +55,18 @@ export function Carousel({ images, aspectRatio = "3/4", priority = false }: Caro
           <div
             key={i}
             className="relative shrink-0"
-            style={{ width: "100%", height: "100%", scrollSnapAlign: "start" }}
+            style={{
+              width: "100%",
+              height: "100%",
+              scrollSnapAlign: "start",
+              backgroundColor: "#f6f1ea",
+            }}
           >
             <Image
               src={img.src}
               alt={img.alt ?? ""}
               fill
-              className="object-cover"
+              className="object-contain"
               sizes="(max-width: 1024px) 100vw, 50vw"
               priority={priority && i === 0}
             />
