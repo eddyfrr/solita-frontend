@@ -18,7 +18,7 @@ const socialLinks = [
   },
   {
     name: "Instagram",
-    href: "https://www.instagram.com/solitabeautybar/",
+    href: "https://www.instagram.com/solita_beautybar/",
     icon: "/images/icons/ig-icon@2x.png",
   },
   {

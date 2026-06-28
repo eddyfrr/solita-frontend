@@ -96,7 +96,7 @@ const jsonLd = {
   areaServed: "Dar es Salaam, Tanzania",
   sameAs: [
     "https://facebook.com/solitabeautybar",
-    "https://instagram.com/solitabeautybar",
+    "https://www.instagram.com/solita_beautybar/",
   ],
 };
 

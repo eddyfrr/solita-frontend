@@ -302,7 +302,17 @@ export default function InfoPage() {
               </p>
               <ul className="ml-5 list-disc" style={{ marginTop: 8 }}>
                 <li>Phone: +255 766 363 233</li>
-                <li>Instagram: @solitabeautybar</li>
+                <li>
+                  Instagram:{" "}
+                  <a
+                    href="https://www.instagram.com/solita_beautybar/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-[#8B5E3C]"
+                  >
+                    @solita_beautybar
+                  </a>
+                </li>
                 <li>
                   Email:{" "}
                   <a
