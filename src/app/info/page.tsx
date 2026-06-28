@@ -42,25 +42,26 @@ export default function InfoPage() {
             </h2>
             <div style={{ fontSize: 15, lineHeight: 1.8, color: "#686868", marginTop: 16 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#282828", marginTop: 24 }}>
-                Lagos Deliveries
+                Dar es Salaam
               </h3>
               <p>
-                We fulfil lagos deliveries the next business day after the order is placed.
+                We offer same-day delivery in Dar es Salaam for purchases made before 12 pm. Orders
+                made after the cut off time are delivered the next business day.
               </p>
 
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#282828", marginTop: 24 }}>
-                Abuja
+                Other Major Cities
               </h3>
               <p>
-                We offer same-day delivery in Abuja for purchases made before 12 pm. Orders made
-                after the cut off time are delivered the next business day.
+                We fulfil deliveries to Arusha, Mwanza, Dodoma and other major cities the next
+                business day after the order is placed.
               </p>
 
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#282828", marginTop: 24 }}>
-                Other Nigerian States
+                Other Tanzanian Regions
               </h3>
               <p>
-                Orders to other states in Nigeria are fulfilled within 2-4 business days.
+                Orders to other regions across Tanzania are fulfilled within 2-4 business days.
               </p>
 
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#282828", marginTop: 24 }}>
@@ -120,10 +121,11 @@ export default function InfoPage() {
                 We Accept
               </h3>
               <ul className="ml-5 list-disc" style={{ marginTop: 8 }}>
+                <li>M-Pesa</li>
+                <li>Tigo Pesa</li>
+                <li>Airtel Money</li>
                 <li>MasterCard</li>
-                <li>VISA NAIRA Card</li>
-                <li>Verve Card</li>
-                <li>PayPal Payment</li>
+                <li>VISA Card</li>
                 <li>Direct Bank Transfer</li>
               </ul>
             </div>
@@ -151,7 +153,7 @@ export default function InfoPage() {
             </h2>
             <div style={{ fontSize: 15, lineHeight: 1.8, color: "#686868", marginTop: 16 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#282828", marginTop: 24 }}>
-                Local Delivery (Abuja)
+                Local Delivery (Dar es Salaam)
               </h3>
               <p>
                 Same day delivery for orders placed before 1pm. Orders placed after the cut off
@@ -159,9 +161,9 @@ export default function InfoPage() {
               </p>
 
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#282828", marginTop: 24 }}>
-                Delivery Within Nigeria
+                Delivery Within Tanzania
               </h3>
-              <p>Delivery within Nigeria is via DHL.</p>
+              <p>Delivery within Tanzania is via trusted courier services.</p>
 
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#282828", marginTop: 24 }}>
                 International Delivery
@@ -299,7 +301,7 @@ export default function InfoPage() {
                 For further inquiries, reach us at:
               </p>
               <ul className="ml-5 list-disc" style={{ marginTop: 8 }}>
-                <li>Phone: +234 908 200 0069</li>
+                <li>Phone: +255 766 363 233</li>
                 <li>Instagram: @solitabeautybar</li>
                 <li>
                   Email:{" "}
