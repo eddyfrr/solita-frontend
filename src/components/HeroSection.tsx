@@ -14,7 +14,7 @@ export function HeroSection() {
         fill
         priority
         sizes="100vw"
-        style={{ objectFit: "cover", objectPosition: "center 20%" }}
+        style={{ objectFit: "cover", objectPosition: "center 30%" }}
       />
 
       {/* Gradient overlay — darker at bottom for text, subtle warm tint */}
