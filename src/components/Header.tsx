@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, Heart, ShoppingBag, Menu, X } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
+import { LANGS, readCookieLang, applySiteLang } from "@/lib/language";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -19,6 +21,12 @@ const navLinks = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { totalItems } = useCart();
+  const { currency, setCurrency, currencies } = useCurrency();
+  const [activeLang, setActiveLang] = useState<"EN" | "SW">("EN");
+
+  useEffect(() => {
+    setActiveLang(readCookieLang());
+  }, []);
 
   return (
     <>
@@ -196,6 +204,65 @@ export function Header() {
                 <Heart className="h-4 w-4" strokeWidth={1.5} />
                 Wishlist
               </Link>
+            </div>
+
+            {/* Currency selector — mobile (the desktop side-rail is hidden < lg) */}
+            <div className="border-t border-[#eee]" style={{ padding: "16px 20px" }}>
+              <p
+                className="text-[12px] font-medium uppercase text-[#8B5E3C]"
+                style={{ letterSpacing: "0.1em", marginBottom: 10 }}
+              >
+                Currency
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {currencies.map((code) => (
+                  <button
+                    key={code}
+                    onClick={() => setCurrency(code)}
+                    className="text-[13px] font-medium transition-colors"
+                    style={{
+                      backgroundColor: currency === code ? "#8B5E3C" : "#fff",
+                      color: currency === code ? "#fff" : "#282828",
+                      border: "1px solid #d9c7b8",
+                      borderRadius: 6,
+                      padding: "7px 12px",
+                      minWidth: 52,
+                    }}
+                  >
+                    {code}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Language selector — mobile */}
+            <div className="border-t border-[#eee]" style={{ padding: "16px 20px" }}>
+              <p
+                className="text-[12px] font-medium uppercase text-[#8B5E3C]"
+                style={{ letterSpacing: "0.1em", marginBottom: 10 }}
+              >
+                Language
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {LANGS.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => {
+                      if (lang.code !== activeLang) applySiteLang(lang.googCode);
+                    }}
+                    className="notranslate text-[13px] font-medium transition-colors"
+                    style={{
+                      backgroundColor: activeLang === lang.code ? "#8B5E3C" : "#fff",
+                      color: activeLang === lang.code ? "#fff" : "#282828",
+                      border: "1px solid #d9c7b8",
+                      borderRadius: 6,
+                      padding: "7px 14px",
+                    }}
+                  >
+                    {lang.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
