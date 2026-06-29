@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, Heart, ShoppingBag, Menu, X } from "lucide-react";
+import { Search, Heart, ShoppingBag, Menu, X, ChevronDown } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { LANGS, readCookieLang, applySiteLang } from "@/lib/language";
@@ -20,6 +20,7 @@ const navLinks = [
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [prefsOpen, setPrefsOpen] = useState(false);
   const { totalItems } = useCart();
   const { currency, setCurrency, currencies } = useCurrency();
   const [activeLang, setActiveLang] = useState<"EN" | "SW">("EN");
@@ -103,8 +104,115 @@ export function Header() {
             </Link>
           </div>
 
-          {/* RIGHT — Desktop: search + wishlist + cart / Mobile: cart only */}
+          {/* RIGHT — Desktop: search + wishlist + cart / Mobile: currency + cart */}
           <div className="flex flex-1 items-center justify-end gap-5">
+            {/* Currency + language — mobile only (desktop has the side-rails).
+                Visible pill in the header so it's actually discoverable. */}
+            <div className="relative lg:hidden">
+              <button
+                onClick={() => setPrefsOpen((v) => !v)}
+                aria-label="Change currency or language"
+                aria-expanded={prefsOpen}
+                className="flex items-center gap-1 text-[#8B5E3C]"
+                style={{
+                  border: "1px solid rgba(139,94,60,0.35)",
+                  borderRadius: 999,
+                  padding: "5px 10px",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  fontFamily: "var(--font-jost), Jost, sans-serif",
+                }}
+              >
+                <span className="notranslate">{currency}</span>
+                <ChevronDown
+                  className="h-3.5 w-3.5 transition-transform"
+                  style={{ transform: prefsOpen ? "rotate(180deg)" : "none" }}
+                />
+              </button>
+
+              {prefsOpen && (
+                <button
+                  aria-label="Close"
+                  tabIndex={-1}
+                  onClick={() => setPrefsOpen(false)}
+                  className="fixed inset-0 z-[602] cursor-default"
+                  style={{ background: "transparent", border: "none" }}
+                />
+              )}
+
+              {prefsOpen && (
+                <div
+                  className="absolute right-0 z-[603]"
+                  style={{
+                    top: "calc(100% + 10px)",
+                    width: 230,
+                    backgroundColor: "#fff",
+                    border: "1px solid #eee",
+                    borderRadius: 10,
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+                    padding: 14,
+                    fontFamily: "var(--font-jost), Jost, sans-serif",
+                  }}
+                >
+                  <p
+                    className="text-[11px] font-semibold uppercase text-[#8B5E3C]"
+                    style={{ letterSpacing: "0.1em", marginBottom: 8 }}
+                  >
+                    Currency
+                  </p>
+                  <div className="flex flex-wrap gap-1.5" style={{ marginBottom: 14 }}>
+                    {currencies.map((code) => (
+                      <button
+                        key={code}
+                        onClick={() => {
+                          setCurrency(code);
+                          setPrefsOpen(false);
+                        }}
+                        className="notranslate text-[12px] font-medium transition-colors"
+                        style={{
+                          backgroundColor: currency === code ? "#8B5E3C" : "#fff",
+                          color: currency === code ? "#fff" : "#282828",
+                          border: "1px solid #d9c7b8",
+                          borderRadius: 6,
+                          padding: "6px 10px",
+                          minWidth: 48,
+                        }}
+                      >
+                        {code}
+                      </button>
+                    ))}
+                  </div>
+
+                  <p
+                    className="text-[11px] font-semibold uppercase text-[#8B5E3C]"
+                    style={{ letterSpacing: "0.1em", marginBottom: 8 }}
+                  >
+                    Language
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {LANGS.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          if (lang.code !== activeLang) applySiteLang(lang.googCode);
+                        }}
+                        className="notranslate text-[12px] font-medium transition-colors"
+                        style={{
+                          backgroundColor: activeLang === lang.code ? "#8B5E3C" : "#fff",
+                          color: activeLang === lang.code ? "#fff" : "#282828",
+                          border: "1px solid #d9c7b8",
+                          borderRadius: 6,
+                          padding: "6px 12px",
+                        }}
+                      >
+                        {lang.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Search — desktop only */}
             <Link
               href="/search"
@@ -204,65 +312,6 @@ export function Header() {
                 <Heart className="h-4 w-4" strokeWidth={1.5} />
                 Wishlist
               </Link>
-            </div>
-
-            {/* Currency selector — mobile (the desktop side-rail is hidden < lg) */}
-            <div className="border-t border-[#eee]" style={{ padding: "16px 20px" }}>
-              <p
-                className="text-[12px] font-medium uppercase text-[#8B5E3C]"
-                style={{ letterSpacing: "0.1em", marginBottom: 10 }}
-              >
-                Currency
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {currencies.map((code) => (
-                  <button
-                    key={code}
-                    onClick={() => setCurrency(code)}
-                    className="text-[13px] font-medium transition-colors"
-                    style={{
-                      backgroundColor: currency === code ? "#8B5E3C" : "#fff",
-                      color: currency === code ? "#fff" : "#282828",
-                      border: "1px solid #d9c7b8",
-                      borderRadius: 6,
-                      padding: "7px 12px",
-                      minWidth: 52,
-                    }}
-                  >
-                    {code}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Language selector — mobile */}
-            <div className="border-t border-[#eee]" style={{ padding: "16px 20px" }}>
-              <p
-                className="text-[12px] font-medium uppercase text-[#8B5E3C]"
-                style={{ letterSpacing: "0.1em", marginBottom: 10 }}
-              >
-                Language
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {LANGS.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => {
-                      if (lang.code !== activeLang) applySiteLang(lang.googCode);
-                    }}
-                    className="notranslate text-[13px] font-medium transition-colors"
-                    style={{
-                      backgroundColor: activeLang === lang.code ? "#8B5E3C" : "#fff",
-                      color: activeLang === lang.code ? "#fff" : "#282828",
-                      border: "1px solid #d9c7b8",
-                      borderRadius: 6,
-                      padding: "7px 14px",
-                    }}
-                  >
-                    {lang.label}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
         </div>
