@@ -188,7 +188,7 @@ export function Footer() {
               fontFamily: "var(--font-jost), Jost, sans-serif",
             }}
           >
-            Copyright 2026 &copy; Solita Beauty Bar
+            Copyright {new Date().getFullYear()} &copy; Solita Beauty Bar
             <span style={{ margin: "0 8px", opacity: 0.4 }}>·</span>
             <Link
               href="/admin"
