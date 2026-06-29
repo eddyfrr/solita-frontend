@@ -140,3 +140,13 @@ export interface APIGalleryPhoto {
 export async function getAPIGalleryPhotos(): Promise<APIGalleryPhoto[]> {
   return (await fetchAPI<APIGalleryPhoto[]>("/gallery/")) || [];
 }
+
+// ── Site Settings (editable homepage content) ──
+
+export interface APISiteSettings {
+  hero_image_url: string | null;
+}
+
+export async function getAPISiteSettings(): Promise<APISiteSettings | null> {
+  return fetchAPI<APISiteSettings>("/site-settings/");
+}

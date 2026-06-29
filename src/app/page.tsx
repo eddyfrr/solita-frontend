@@ -4,7 +4,7 @@ import { HeroSection } from "@/components/HeroSection";
 import { ProductCard } from "@/components/ProductCard";
 import { Footer } from "@/components/Footer";
 import { getFeaturedProducts, getCatalogProducts } from "@/data/products";
-import { getAPIFeaturedProducts, getAPIProducts, getAPIGalleryPhotos } from "@/lib/server-api";
+import { getAPIFeaturedProducts, getAPIProducts, getAPIGalleryPhotos, getAPISiteSettings } from "@/lib/server-api";
 import Link from "next/link";
 
 const fallbackGalleryImages = [
@@ -24,6 +24,7 @@ export default async function Home() {
   const apiFeatured = await getAPIFeaturedProducts();
   const apiCatalog = await getAPIProducts();
   const apiGallery = await getAPIGalleryPhotos();
+  const apiSettings = await getAPISiteSettings();
 
   const formatTsh = (price: string) =>
     `TSh${Number(price).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
@@ -71,7 +72,7 @@ export default async function Home() {
       <Header />
 
       <main>
-        <HeroSection />
+        <HeroSection imageUrl={apiSettings?.hero_image_url} />
 
         {/* Featured Hair Section */}
         <section style={{ padding: "60px 0" }}>

@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   Package,
   Image as ImageIcon,
+  Home,
   LogOut,
   X,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import { logout } from "@/lib/api";
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Homepage", href: "/admin/homepage", icon: Home },
   { name: "Products", href: "/admin/products", icon: ShoppingBag },
   { name: "Services", href: "/admin/services", icon: Scissors },
   { name: "Bookings", href: "/admin/bookings", icon: CalendarCheck },

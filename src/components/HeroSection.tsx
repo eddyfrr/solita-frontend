@@ -1,7 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export function HeroSection() {
+export function HeroSection({ imageUrl }: { imageUrl?: string | null }) {
+  // Admin-uploaded hero image (from the API) wins; otherwise fall back to the
+  // bundled static banner so the homepage always has a hero.
+  const src = imageUrl || "/images/hero-banner.jpg";
+
   return (
     <section
       className="relative w-full overflow-hidden"
@@ -9,7 +13,7 @@ export function HeroSection() {
     >
       {/* Background Image */}
       <Image
-        src="/images/hero-banner.jpg"
+        src={src}
         alt="Solita Beauty Bar"
         fill
         priority
