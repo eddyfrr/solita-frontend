@@ -16,6 +16,7 @@ interface Order {
   customer_email: string;
   customer_phone: string;
   shipping_address: string;
+  notes: string;
   status: string;
   subtotal: string;
   shipping_cost: string;
@@ -86,6 +87,7 @@ export default function OrdersPage() {
                 <tr style={{ borderBottom: "1px solid #eee", backgroundColor: "#fafafa" }}>
                   <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500, color: "#686868", fontSize: 12 }}>Order</th>
                   <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500, color: "#686868", fontSize: 12 }}>Customer</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500, color: "#686868", fontSize: 12 }}>Deliver to</th>
                   <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500, color: "#686868", fontSize: 12 }}>Items</th>
                   <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500, color: "#686868", fontSize: 12 }}>Total</th>
                   <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500, color: "#686868", fontSize: 12 }}>Status</th>
@@ -104,6 +106,14 @@ export default function OrdersPage() {
                         <div style={{ color: "#282828" }}>{order.customer_name}</div>
                         <div style={{ fontSize: 12, color: "#999" }}>{order.customer_phone}</div>
                       </td>
+                      <td style={{ padding: "12px 16px", color: "#686868", fontSize: 13, maxWidth: 220 }}>
+                        <div>{order.shipping_address}</div>
+                        {order.notes?.trim() && (
+                          <div style={{ marginTop: 6, fontSize: 12, color: "#8B5E3C", fontStyle: "italic" }}>
+                            &ldquo;{order.notes.trim()}&rdquo;
+                          </div>
+                        )}
+                      </td>
                       <td style={{ padding: "12px 16px", color: "#686868", fontSize: 13 }}>
                         {order.items.map((item) => (
                           <div key={item.id}>
@@ -112,7 +122,7 @@ export default function OrdersPage() {
                         ))}
                       </td>
                       <td style={{ padding: "12px 16px", fontWeight: 500, color: "#8B5E3C" }}>
-                        ${order.total}
+                        TSh{order.total}
                       </td>
                       <td style={{ padding: "12px 16px" }}>
                         <select
