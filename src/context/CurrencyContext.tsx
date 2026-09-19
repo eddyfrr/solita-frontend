@@ -28,10 +28,14 @@ const INITIAL_DISPLAY_RATES: Record<CurrencyCode, number> = {
 
 const CURRENCY_LIST: CurrencyCode[] = ["TZS", "USD", "KES", "GBP", "EUR", "NGN", "ZAR"];
 
-// Refresh rates every 2 minutes for accuracy
-const REFRESH_INTERVAL = 2 * 60 * 1000;
-// Cache for 2 minutes
-const CACHE_TTL = 2 * 60 * 1000;
+// PERFORMANCE: these were both 2 minutes, which meant a third-party request to
+// open.er-api.com on essentially every page load plus a timer re-fetching all
+// session long. Retail FX does not move enough in 2 minutes to matter here, and
+// the amount actually charged is converted server-side with its own live rate
+// (see backend get_tzs_per_usd) — these rates are display-only.
+const REFRESH_INTERVAL = 60 * 60 * 1000;
+// Cache for an hour
+const CACHE_TTL = 60 * 60 * 1000;
 const CACHE_KEY = "solita-exchange-rates";
 // Retry delay when fetch fails (starts at 5s, backs off)
 const INITIAL_RETRY_DELAY = 5_000;
