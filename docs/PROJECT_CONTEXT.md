@@ -77,7 +77,10 @@ Router: `products`, `categories`, `services`, `bookings`, `orders`, `gallery`.
 Auth: `auth/login|register|me|token/refresh`. Dashboard: `dashboard/stats`.
 Nested: service styles + style images, product images.
 Availability: `bookings/availability/?date=` (per-day slot capacity).
-Payments: `payments/initiate`, `payments/callback` (**ClickPesa**).
+Checkout: `payments/initiate` returns `whatsapp_url` + `reference` under the WhatsApp
+provider (the default), or `checkout_url` under ClickPesa. `POST /api/bookings/` embeds the
+same `whatsapp_url`/`reference` in its 201 response. `payments/callback` is the ClickPesa
+webhook and is inert while WhatsApp is active.
 Booking creation is throttled `6/min`.
 
 ### Catalog seeding
@@ -86,7 +89,7 @@ Prefer idempotent management commands over manual admin entry:
 `booking/management/commands/create_admin.py`.
 
 ## Integrations & config (env-driven, in `backend/.env`)
-- **ClickPesa** (active payment gateway): `CLICKPESA_CLIENT_ID`, `CLICKPESA_API_KEY`,
+- **ClickPesa** (dormant gateway — see `PAYMENTS_PROVIDER`): `CLICKPESA_CLIENT_ID`, `CLICKPESA_API_KEY`,
   `CLICKPESA_API_URL`, success/failure URLs.
 - **Cloudinary**: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
 - **Email**: Gmail SMTP (`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`) + `ELASTICEMAIL_API_KEY`.
@@ -98,7 +101,21 @@ Prefer idempotent management commands over manual admin entry:
   via env vars (Azure: app `solita-backend-edmund`, RG `solita-prod`, domain `solitabeautybar.me`).
 
 ## Known caveats / open items
-- ClickPesa keys currently in env are from a **deactivated** account; a new account is pending.
+- **Checkout is WhatsApp, not a payment gateway.** `PAYMENTS_PROVIDER` (settings.py, env-driven,
+  default `whatsapp`) decides. Orders and bookings are still written to the DB exactly as before —
+  only the hand-off changed: the customer is sent to `wa.me/<WHATSAPP_BUSINESS_NUMBER>` with a
+  pre-filled summary (`api/whatsapp.py`) and payment is arranged in chat. References are
+  `SBB-OR<id>` / `SBB-BK<id>`. Setting `PAYMENTS_PROVIDER=clickpesa` restores the hosted gateway;
+  the ClickPesa code in `api/payments.py` and the ClickPesa branches in `api/views.py` are
+  untouched and still work. The frontend honours whichever key comes back.
+- Messages always quote **TZS**, because that is what the DB stores — do not pass the visitor's
+  display currency into the WhatsApp builders, it would mislabel the amount.
+- **Correction (verified 2026-09-19):** the note that ClickPesa keys were from a *deactivated*
+  account is **wrong** — running with `PAYMENTS_PROVIDER=clickpesa` obtained a live auth token
+  and generated a real checkout link. The credentials in `backend/.env` work.
+- `_get_auth_token()` in `api/payments.py` is called outside the try/except in `initiate_payment`,
+  so a transient ClickPesa network error surfaces as a 500 rather than a clean 502. Pre-existing;
+  only matters if ClickPesa is re-enabled.
 - Cloudinary API secret still needs rotation (leftover from a past secret-leak cleanup).
 - `booking` app models are dead; don't extend them — add to `api`.
 - Lint reports many pre-existing errors/warnings repo-wide; `typecheck` is clean. Don't treat

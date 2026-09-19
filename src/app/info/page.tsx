@@ -114,8 +114,9 @@ export default function InfoPage() {
             </h2>
             <div style={{ fontSize: 15, lineHeight: 1.8, color: "#686868", marginTop: 16 }}>
               <p>
-                To ensure that we offer our customers a safe and easy transaction platform,
-                we&apos;ve chosen gateways that suit our customers from all over the world.
+                Orders and bookings are confirmed personally over WhatsApp. Once you place an
+                order on the site we&apos;ll message you to confirm availability, agree the final
+                amount and arrange payment — so you always speak to a real person before paying.
               </p>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#282828", marginTop: 24 }}>
                 We Accept

@@ -4,7 +4,7 @@ import { use, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Check, Clock, Calendar, User, CreditCard } from "lucide-react";
+import { ArrowLeft, Check, Clock, Calendar, User, MessageCircle } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -81,10 +81,10 @@ export default function BookingPage({
   const [notes, setNotes] = useState("");
 
   // Payment state
-  const [paymentMethod, setPaymentMethod] = useState<"mpesa" | "card">("mpesa");
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingError, setBookingError] = useState("");
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [bookingReference, setBookingReference] = useState("");
 
   useEffect(() => {
     // Prefer API data — that's what the public services page renders, and what
@@ -222,7 +222,7 @@ export default function BookingPage({
     ...(hasOptions ? [{ key: "options" as Step, label: "Options", icon: Check }] : []),
     { key: "datetime", label: "Date & Time", icon: Calendar },
     { key: "details", label: "Your Details", icon: User },
-    { key: "payment", label: "Payment", icon: CreditCard },
+    { key: "payment", label: "Confirm", icon: MessageCircle },
   ];
 
   // If no options, treat current step as datetime
@@ -276,7 +276,6 @@ export default function BookingPage({
       selected_length: selectedLength || "",
       selected_color: selectedColor || "",
       selected_type: selectedType || "",
-      payment_method: paymentMethod,
       checkout_currency: convertTZS(parseFloat(style.priceRaw)).currency,
       notes: notes || "",
     };
@@ -306,17 +305,22 @@ export default function BookingPage({
         return;
       }
 
-      if (booking.checkout_url) {
-        setCheckoutUrl(booking.checkout_url);
+      // Under the WhatsApp provider the API returns whatsapp_url; if the backend
+      // is ever switched back to ClickPesa it returns checkout_url instead.
+      const handoffUrl = booking.whatsapp_url || booking.checkout_url;
+
+      if (handoffUrl) {
+        setCheckoutUrl(handoffUrl);
+        setBookingReference(booking.reference || "");
         setIsProcessing(false);
-        window.location.href = booking.checkout_url;
+        window.location.href = handoffUrl;
         return;
       }
 
-      // mpesa/card but no checkout URL — payment gateway failed
+      // Booking saved but no hand-off link came back.
       setBookingError(
-        "Your booking was saved but we couldn't connect to the payment gateway. " +
-        "Please check your phone number includes the country code (e.g. +255745...) and try again."
+        "Your booking was saved but we couldn't open WhatsApp. " +
+        "Please message us on WhatsApp to confirm your appointment."
       );
     } catch (err) {
       const errMsg = "Connection error: " + String(err);
@@ -433,21 +437,22 @@ export default function BookingPage({
                 className="mx-auto flex items-center justify-center"
                 style={{ width: 64, height: 64, borderRadius: "50%", backgroundColor: "#FDF8F3", marginBottom: 24 }}
               >
-                <CreditCard size={28} color="#8B5E3C" />
+                <MessageCircle size={28} color="#1DA851" />
               </div>
               <h2 style={{ fontSize: 24, fontWeight: 500, color: "#282828", marginBottom: 12, fontFamily: "var(--font-playfair), Playfair Display, serif" }}>
-                Complete Your Payment
+                Almost Done!
               </h2>
               <p style={{ fontSize: 14, color: "#686868", lineHeight: 1.7, marginBottom: 24 }}>
-                Your booking has been saved. Click below to pay securely via ClickPesa.
+                Your appointment{bookingReference ? <> (<strong>{bookingReference}</strong>)</> : null} has
+                been saved. Continue on WhatsApp so we can confirm the slot and arrange payment.
               </p>
               <a
                 href={checkoutUrl}
+                className="inline-flex items-center gap-2"
                 style={{
-                  display: "inline-block",
-                  backgroundColor: "#8B5E3C",
+                  backgroundColor: "#1DA851",
                   color: "#fff",
-                  padding: "14px 40px",
+                  padding: "14px 32px",
                   fontSize: 12,
                   fontWeight: 700,
                   letterSpacing: "0.2em",
@@ -456,10 +461,11 @@ export default function BookingPage({
                   marginBottom: 16,
                 }}
               >
-                Pay Now
+                <MessageCircle className="h-4 w-4" />
+                Continue on WhatsApp
               </a>
               <p style={{ fontSize: 12, color: "#999" }}>
-                You will be redirected to ClickPesa&apos;s secure checkout.
+                Your booking is saved either way — this just opens the chat.
               </p>
             </div>
           )}
@@ -874,7 +880,7 @@ export default function BookingPage({
                             }}
                           />
                           <p style={{ fontSize: 12, color: "#B8860B", marginTop: 6 }}>
-                            Please enter a valid phone number with country code (e.g. +255 745 636 924) to ensure payment works correctly.
+                            Please include your country code (e.g. +255 745 636 924) so we can reach you on WhatsApp.
                           </p>
                         </div>
                       </div>
@@ -909,10 +915,10 @@ export default function BookingPage({
                 {activeStep === "payment" && (
                   <div>
                     <h2 style={{ fontSize: 22, fontWeight: 500, color: "#282828", marginBottom: 8 }}>
-                      Payment
+                      Confirm Your Appointment
                     </h2>
                     <p style={{ fontSize: 14, color: "#686868", marginBottom: 28 }}>
-                      Choose your payment method
+                      Check the details below before we continue on WhatsApp
                     </p>
 
                     {/* Booking Summary */}
@@ -966,46 +972,33 @@ export default function BookingPage({
                         </div>
                         {currency !== "TZS" && (
                           <p style={{ fontSize: 12, color: "#B8860B", marginTop: 8, lineHeight: 1.5 }}>
-                            You will be charged in <strong>{currency === "USD" ? "USD" : "USD (converted)"}</strong> via ClickPesa. The {currency} amount shown is an estimate based on current exchange rates.
+                            Prices are set in <strong>TZS</strong>. The {currency} amount shown is an estimate based on current exchange rates — we&apos;ll confirm the final price on WhatsApp.
                           </p>
                         )}
                       </div>
                     </div>
 
-                    {/* Payment Methods */}
-                    <div className="flex flex-col gap-3">
-                      {[
-                        { key: "mpesa" as const, label: "M-Pesa / Mobile Money", desc: "Pay via mobile money" },
-                        { key: "card" as const, label: "Card Payment", desc: "Debit or credit card" },
-                      ].map((method) => (
-                        <button
-                          key={method.key}
-                          onClick={() => setPaymentMethod(method.key)}
-                          className="flex items-center gap-4 text-left"
-                          style={{
-                            padding: "16px 20px",
-                            border: paymentMethod === method.key ? "2px solid #8B5E3C" : "1px solid #ddd",
-                            borderRadius: 8,
-                            backgroundColor: paymentMethod === method.key ? "#faf8f3" : "#fff",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 20,
-                              height: 20,
-                              borderRadius: "50%",
-                              border: paymentMethod === method.key ? "6px solid #8B5E3C" : "2px solid #ccc",
-                              transition: "all 0.2s",
-                            }}
-                          />
-                          <div>
-                            <div style={{ fontSize: 15, fontWeight: 500, color: "#282828" }}>{method.label}</div>
-                            <div style={{ fontSize: 13, color: "#999" }}>{method.desc}</div>
-                          </div>
-                        </button>
-                      ))}
+                    {/* How the booking is completed */}
+                    <div
+                      className="flex items-start gap-3"
+                      style={{
+                        padding: "16px 18px",
+                        borderRadius: 8,
+                        backgroundColor: "#F0FAF2",
+                        border: "1px solid #CDEBD6",
+                      }}
+                    >
+                      <MessageCircle className="h-5 w-5 shrink-0" style={{ color: "#1DA851", marginTop: 1 }} />
+                      <div>
+                        <div style={{ fontSize: 15, fontWeight: 500, color: "#282828", marginBottom: 4 }}>
+                          We&apos;ll confirm on WhatsApp
+                        </div>
+                        <div style={{ fontSize: 13, color: "#5B6B60", lineHeight: 1.6 }}>
+                          Confirming opens a WhatsApp chat with us, already filled in with your
+                          appointment details. We&apos;ll check the slot, confirm the final price for
+                          your chosen style and arrange payment with you there.
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1059,7 +1052,7 @@ export default function BookingPage({
                         opacity: isProcessing ? 0.7 : 1,
                       }}
                     >
-                      {isProcessing ? "Processing..." : "Pay Now"}
+                      {isProcessing ? "Confirming..." : "Confirm on WhatsApp"}
                     </button>
                   ) : (
                     <button

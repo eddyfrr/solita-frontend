@@ -7,9 +7,9 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, MessageCircle } from "lucide-react";
 
-type Step = "details" | "payment" | "confirmed";
+type Step = "details" | "review" | "confirmed";
 
 export default function CheckoutPage() {
   const { items, clearCart } = useCart();
@@ -23,9 +23,12 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [notes, setNotes] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"mpesa" | "card">("mpesa");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // Set once the order is saved — kept so the confirmation screen can re-offer
+  // the WhatsApp hand-off if the customer navigates back.
+  const [whatsappUrl, setWhatsappUrl] = useState("");
+  const [orderReference, setOrderReference] = useState("");
 
   const getNumericPrice = (price: string): number => {
     const match = price.match(/[\d,.]+/);
@@ -54,7 +57,6 @@ export default function CheckoutPage() {
         customer_phone: phone,
         shipping_address: `${address}, ${city}`,
         notes,
-        payment_method: paymentMethod,
         subtotal: subtotal.toFixed(2),
         shipping_cost: shipping.toFixed(2),
         total: total.toFixed(2),
@@ -78,8 +80,10 @@ export default function CheckoutPage() {
 
       const order = await orderRes.json();
 
-      // Initiate ClickPesa payment
-      const paymentRes = await fetch(`${API_BASE}/payments/initiate/`, {
+      // Ask the API for the checkout hand-off. Under the WhatsApp provider this
+      // comes back as whatsapp_url; if the backend is ever switched back to
+      // ClickPesa it returns checkout_url instead, so honour both.
+      const checkoutRes = await fetch(`${API_BASE}/payments/initiate/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -89,19 +93,24 @@ export default function CheckoutPage() {
         }),
       });
 
-      if (!paymentRes.ok) {
-        throw new Error("Failed to initiate payment. Please try again.");
+      if (!checkoutRes.ok) {
+        throw new Error("Your order was saved but we couldn't open WhatsApp. Please contact us to confirm it.");
       }
 
-      const paymentData = await paymentRes.json();
+      const checkoutData = await checkoutRes.json();
+      const handoffUrl = checkoutData.whatsapp_url || checkoutData.checkout_url;
 
-      if (paymentData.checkout_url) {
-        // Redirect to ClickPesa checkout portal
-        clearCart();
-        window.location.href = paymentData.checkout_url;
-      } else {
-        throw new Error(paymentData.error || "Could not generate payment link.");
+      if (!handoffUrl) {
+        throw new Error(checkoutData.error || "Could not generate your order link.");
       }
+
+      // Show the confirmation underneath first, so the customer still has their
+      // reference and a retry button if they come back from WhatsApp.
+      setWhatsappUrl(checkoutData.whatsapp_url || "");
+      setOrderReference(checkoutData.reference || "");
+      setStep("confirmed");
+      clearCart();
+      window.location.href = handoffUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -169,13 +178,31 @@ export default function CheckoutPage() {
               <h1 style={{ fontSize: 28, fontWeight: 500, color: "#5C3D28", marginBottom: 12, fontFamily: "var(--font-playfair), Playfair Display, serif" }}>
                 Order Placed!
               </h1>
-              <p style={{ fontSize: 15, color: "#686868", lineHeight: 1.7, maxWidth: 450, margin: "0 auto 8px" }}>
-                Thank you for your order. We&apos;ll send a confirmation to <strong>{email}</strong> with your order details.
+              <p style={{ fontSize: 15, color: "#686868", lineHeight: 1.7, maxWidth: 480, margin: "0 auto 8px" }}>
+                Thank you! We&apos;ve saved your order{orderReference ? <> as <strong>{orderReference}</strong></> : null} and
+                opened WhatsApp so we can confirm it with you and arrange payment and delivery.
               </p>
               <p style={{ fontSize: 13, color: "#999", marginBottom: 32 }}>
-                You&apos;ll receive tracking information once your order ships.
+                If WhatsApp didn&apos;t open, use the button below — your order is safe either way.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                {whatsappUrl && (
+                  <a
+                    href={whatsappUrl}
+                    className="inline-flex items-center justify-center gap-2 uppercase transition-opacity hover:opacity-90"
+                    style={{
+                      backgroundColor: "#1DA851",
+                      color: "#fff",
+                      padding: "12px 32px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      letterSpacing: "0.15em",
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Open WhatsApp
+                  </a>
+                )}
                 <Link
                   href="/shop"
                   className="inline-flex items-center justify-center uppercase transition-opacity hover:opacity-90"
@@ -273,7 +300,7 @@ export default function CheckoutPage() {
                               style={{ width: "100%", padding: "11px 14px", fontSize: 15, border: "1px solid #ddd", borderRadius: 6, outline: "none", fontFamily: "inherit" }}
                             />
                             <p style={{ fontSize: 12, color: "#B8860B", marginTop: 6 }}>
-                              Please enter a valid phone number with country code (e.g. +255 745 636 924) to ensure payment works correctly.
+                              Please include your country code (e.g. +255 745 636 924) so we can reach you on WhatsApp.
                             </p>
                           </div>
                         </div>
@@ -319,7 +346,7 @@ export default function CheckoutPage() {
                       </div>
 
                       <button
-                        onClick={() => setStep("payment")}
+                        onClick={() => setStep("review")}
                         disabled={!canProceed}
                         className="w-full uppercase transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed mt-6"
                         style={{
@@ -334,12 +361,12 @@ export default function CheckoutPage() {
                           borderRadius: 6,
                         }}
                       >
-                        Continue to Payment
+                        Review Order
                       </button>
                     </div>
                   )}
 
-                  {step === "payment" && (
+                  {step === "review" && (
                     <div
                       style={{
                         backgroundColor: "#fff",
@@ -349,42 +376,42 @@ export default function CheckoutPage() {
                       }}
                     >
                       <h2 style={{ fontSize: 18, fontWeight: 500, color: "#282828", marginBottom: 20 }}>
-                        Payment Method
+                        Confirm Your Order
                       </h2>
 
-                      <div className="flex flex-col gap-3" style={{ marginBottom: 24 }}>
-                        {[
-                          { key: "mpesa" as const, label: "M-Pesa / Mobile Money", desc: "Pay via mobile money" },
-                          { key: "card" as const, label: "Card Payment", desc: "Debit or credit card" },
-                        ].map((method) => (
-                          <button
-                            key={method.key}
-                            onClick={() => setPaymentMethod(method.key)}
-                            className="flex items-center gap-4 text-left"
-                            style={{
-                              padding: "16px 20px",
-                              border: paymentMethod === method.key ? "2px solid #8B5E3C" : "1px solid #ddd",
-                              borderRadius: 8,
-                              backgroundColor: paymentMethod === method.key ? "#FDF5ED" : "#fff",
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: 20,
-                                height: 20,
-                                borderRadius: "50%",
-                                border: paymentMethod === method.key ? "6px solid #8B5E3C" : "2px solid #ccc",
-                                transition: "all 0.2s",
-                              }}
-                            />
-                            <div>
-                              <div style={{ fontSize: 15, fontWeight: 500, color: "#282828" }}>{method.label}</div>
-                              <div style={{ fontSize: 13, color: "#999" }}>{method.desc}</div>
+                      <div style={{ marginBottom: 24 }}>
+                        <div
+                          className="flex items-start gap-3"
+                          style={{
+                            padding: "16px 18px",
+                            borderRadius: 8,
+                            backgroundColor: "#F0FAF2",
+                            border: "1px solid #CDEBD6",
+                            marginBottom: 20,
+                          }}
+                        >
+                          <MessageCircle className="h-5 w-5 shrink-0" style={{ color: "#1DA851", marginTop: 1 }} />
+                          <div>
+                            <div style={{ fontSize: 15, fontWeight: 500, color: "#282828", marginBottom: 4 }}>
+                              We&apos;ll finish on WhatsApp
                             </div>
-                          </button>
-                        ))}
+                            <div style={{ fontSize: 13, color: "#5B6B60", lineHeight: 1.6 }}>
+                              Placing your order opens a WhatsApp chat with us, already filled in with
+                              your order details. We&apos;ll confirm availability and arrange payment
+                              and delivery with you there.
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ fontSize: 13, color: "#686868", lineHeight: 1.9 }}>
+                          <div style={{ fontWeight: 600, color: "#282828", marginBottom: 6, fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                            Delivering to
+                          </div>
+                          <div>{fullName}</div>
+                          <div>{address}, {city}</div>
+                          <div>{phone}</div>
+                          <div>{email}</div>
+                        </div>
                       </div>
 
                       {error && (
@@ -414,11 +441,11 @@ export default function CheckoutPage() {
                         <button
                           onClick={handlePlaceOrder}
                           disabled={loading}
-                          className="uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+                          className="inline-flex items-center gap-2 uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
                           style={{
                             backgroundColor: "#8B5E3C",
                             color: "#fff",
-                            padding: "14px 40px",
+                            padding: "14px 32px",
                             fontSize: 12,
                             fontWeight: 700,
                             letterSpacing: "0.2em",
@@ -427,7 +454,14 @@ export default function CheckoutPage() {
                             borderRadius: 6,
                           }}
                         >
-                          {loading ? "Processing..." : `Place Order — ${formatPrice(`TSh${total.toFixed(0)}`)}`}
+                          {loading ? (
+                            "Placing Order..."
+                          ) : (
+                            <>
+                              <MessageCircle className="h-4 w-4" />
+                              Order on WhatsApp
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -489,7 +523,7 @@ export default function CheckoutPage() {
                       </div>
                       {currency !== "TZS" && (
                         <p style={{ fontSize: 12, color: "#B8860B", marginTop: 10, lineHeight: 1.5 }}>
-                          You will be charged in <strong>{currency === "USD" ? "USD" : "USD (converted)"}</strong> via ClickPesa. The {currency} amount shown is an estimate based on current exchange rates.
+                          Prices are set in <strong>TZS</strong>. The {currency} amount shown is an estimate based on current exchange rates — we&apos;ll confirm the final amount on WhatsApp.
                         </p>
                       )}
                     </div>
