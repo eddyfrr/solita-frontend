@@ -104,13 +104,19 @@ export default function CheckoutPage() {
         throw new Error(checkoutData.error || "Could not generate your order link.");
       }
 
-      // Show the confirmation underneath first, so the customer still has their
-      // reference and a retry button if they come back from WhatsApp.
       setWhatsappUrl(checkoutData.whatsapp_url || "");
       setOrderReference(checkoutData.reference || "");
       setStep("confirmed");
       clearCart();
-      window.location.href = handoffUrl;
+
+      // Paint the confirmation before leaving for WhatsApp. Without the delay the
+      // redirect replaces the page instantly, so if WhatsApp is slow to load, is
+      // blocked, or the customer backs out, they land on nothing and have no idea
+      // whether the order went through. This way the reference and the "Open
+      // WhatsApp" button are always on screen behind the hand-off.
+      window.setTimeout(() => {
+        window.location.href = handoffUrl;
+      }, 1200);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {

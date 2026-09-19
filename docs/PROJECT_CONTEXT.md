@@ -108,6 +108,11 @@ Prefer idempotent management commands over manual admin entry:
   `SBB-OR<id>` / `SBB-BK<id>`. Setting `PAYMENTS_PROVIDER=clickpesa` restores the hosted gateway;
   the ClickPesa code in `api/payments.py` and the ClickPesa branches in `api/views.py` are
   untouched and still work. The frontend honours whichever key comes back.
+- **Deploy the backend BEFORE the frontend for any checkout change.** Vercel deploys in ~1-3
+  min but Azure takes ~8-10 min (build + container recycle). On 2026-09-19 both were pushed
+  together, so for ~19 minutes the new frontend talked to the old ClickPesa backend and the
+  `checkout_url` fallback sent live customers to the ClickPesa portal. The fallback is correct
+  and stays (it is the revival path) — the ordering is what must change.
 - Messages always quote **TZS**, because that is what the DB stores — do not pass the visitor's
   display currency into the WhatsApp builders, it would mislabel the amount.
 - **Correction (verified 2026-09-19):** the note that ClickPesa keys were from a *deactivated*

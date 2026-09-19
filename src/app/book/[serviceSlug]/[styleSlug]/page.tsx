@@ -313,7 +313,11 @@ export default function BookingPage({
         setCheckoutUrl(handoffUrl);
         setBookingReference(booking.reference || "");
         setIsProcessing(false);
-        window.location.href = handoffUrl;
+        // Paint the "Almost Done!" panel before leaving, so the reference and the
+        // WhatsApp button survive a slow or blocked hand-off. See checkout page.
+        window.setTimeout(() => {
+          window.location.href = handoffUrl;
+        }, 1200);
         return;
       }
 
