@@ -18,6 +18,11 @@ interface CartContextType {
   updateQuantity: (slug: string, quantity: number, selectedLength?: string) => void;
   clearCart: () => void;
   totalItems: number;
+  /** False until the cart has been read from localStorage on the client.
+   *  Pages must not render an "empty cart" state while this is false — on the
+   *  server `items` is always [], so doing so shows every customer with a full
+   *  cart an empty one until React hydrates. */
+  hydrated: boolean;
 }
 
 const CART_STORAGE_KEY = "ayya-cart";
@@ -46,9 +51,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage on mount.
+  // Merge rather than replace: if anything was added between hydration attaching
+  // the click handlers and this effect running, a plain overwrite would silently
+  // throw that addition away.
   useEffect(() => {
-    setItems(loadCart());
+    const stored = loadCart();
+    setItems((pending) => {
+      if (pending.length === 0) return stored;
+      const merged = [...stored];
+      for (const item of pending) {
+        const existing = merged.find(
+          (i) => i.slug === item.slug && i.selectedLength === item.selectedLength
+        );
+        if (existing) existing.quantity += item.quantity;
+        else merged.push(item);
+      }
+      return merged;
+    });
     setHydrated(true);
   }, []);
 
@@ -104,7 +124,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, totalItems }}
+      value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, hydrated }}
     >
       {children}
     </CartContext.Provider>

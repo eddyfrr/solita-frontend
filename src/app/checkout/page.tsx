@@ -12,7 +12,7 @@ import { ArrowLeft, Check, MessageCircle } from "lucide-react";
 type Step = "details" | "review" | "confirmed";
 
 export default function CheckoutPage() {
-  const { items, clearCart } = useCart();
+  const { items, clearCart, hydrated } = useCart();
   const { formatPrice, convertTZS, currency } = useCurrency();
   const [step, setStep] = useState<Step>("details");
 
@@ -123,6 +123,24 @@ export default function CheckoutPage() {
       setLoading(false);
     }
   };
+
+  // Wait for the cart to load before judging it empty. `items` is [] during SSR
+  // and until the mount effect reads localStorage, so without this guard every
+  // customer with a full cart is told their cart is empty for a moment.
+  if (!hydrated && step !== "confirmed") {
+    return (
+      <>
+        <Header />
+        <main
+          className="flex-1 flex items-center justify-center"
+          style={{ paddingTop: 150, paddingBottom: 80, fontFamily: "var(--font-jost), Jost, sans-serif", backgroundColor: "#FDFAF6" }}
+        >
+          <p style={{ fontSize: 15, color: "#999" }}>Loading your cart…</p>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   // Empty cart redirect
   if (items.length === 0 && step !== "confirmed") {

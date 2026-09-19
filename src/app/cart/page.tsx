@@ -9,7 +9,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { Minus, Plus, Trash2 } from "lucide-react";
 
 export default function CartPage() {
-  const { items, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { items, updateQuantity, removeFromCart, clearCart, hydrated } = useCart();
   const { formatPrice } = useCurrency();
 
   const getNumericPrice = (price: string): number => {
@@ -42,7 +42,14 @@ export default function CartPage() {
             Cart
           </h1>
 
-          {items.length === 0 ? (
+          {!hydrated ? (
+            /* `items` is [] until the mount effect reads localStorage, so showing
+               the empty state before then tells customers with a full cart that
+               it is empty. */
+            <div className="text-center" style={{ padding: "60px 0" }}>
+              <p style={{ fontSize: 15, color: "#999" }}>Loading your cart…</p>
+            </div>
+          ) : items.length === 0 ? (
             <div className="text-center" style={{ padding: "60px 0" }}>
               <p style={{ fontSize: 16, color: "#686868", marginBottom: 24 }}>
                 Your cart is currently empty.
