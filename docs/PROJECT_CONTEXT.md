@@ -108,6 +108,15 @@ Prefer idempotent management commands over manual admin entry:
   `SBB-OR<id>` / `SBB-BK<id>`. Setting `PAYMENTS_PROVIDER=clickpesa` restores the hosted gateway;
   the ClickPesa code in `api/payments.py` and the ClickPesa branches in `api/views.py` are
   untouched and still work. The frontend honours whichever key comes back.
+- **Reviving ClickPesa now needs `CLICKPESA_WEBHOOK_SECRET`.** `payments/callback/` marks
+  orders paid and emails the customer, so it fails closed: 404 unless PAYMENTS_PROVIDER is
+  clickpesa, 503 unless the secret is configured, 401 unless the caller sends it in
+  `X-Webhook-Secret`. Set it in Azure *and* at ClickPesa, or the webhook stays shut.
+  (It was previously fully open — an anonymous POST could mark any order paid. Fixed
+  2026-09-19; `api/tests.py` covers it.)
+- Note the callback's reference parser accepts both `OR<id>T<unix>` (what
+  `generate_checkout_link` actually emits) and the legacy `ORDER-<id>`. Only the legacy form
+  was handled before, so the webhook had never worked even when ClickPesa was live.
 - **Deploy the backend BEFORE the frontend for any checkout change.** Vercel deploys in ~1-3
   min but Azure takes ~8-10 min (build + container recycle). On 2026-09-19 both were pushed
   together, so for ~19 minutes the new frontend talked to the old ClickPesa backend and the
