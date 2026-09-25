@@ -33,12 +33,10 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const securityHeaders = [
-  // Enforced now: these directives can't break the page's own resources.
-  { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'" },
-  // The full policy runs report-only first: violations show in the browser
-  // console without blocking anything. Promote it to the enforced header once
-  // a few days of real traffic (incl. Google Translate) show it clean.
-  { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicy },
+  // Enforced since 2026-09-25, after report-only crawls of the live site
+  // (desktop, phone, Swahili) came back clean. Adding a new third-party
+  // script, API or iframe? Allow its origin above or the browser blocks it.
+  { key: "Content-Security-Policy", value: contentSecurityPolicy },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
