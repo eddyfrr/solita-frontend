@@ -2,23 +2,11 @@
 
 import { useEffect, useState, useRef } from "react";
 import { Plus, Trash2, Upload, X } from "lucide-react";
+import { ImageCropper } from "@/components/ImageCropper";
+import { getGalleryPhotos, uploadGalleryPhoto, deleteGalleryPhoto } from "@/lib/api";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined"
-    ? `${window.location.protocol}//${window.location.hostname}:8000/api`
-    : "http://localhost:8000/api");
-
-function getToken() {
-  if (typeof window === "undefined") return null;
-  const raw = localStorage.getItem("admin-tokens");
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw).access;
-  } catch {
-    return null;
-  }
-}
+// Portrait, like Instagram; the public gallery's tiles are mostly 3:4–4:5.
+const GALLERY_ASPECT = 4 / 5;
 
 interface Photo {
   id: number;
@@ -35,20 +23,16 @@ export default function GalleryPage() {
   const [caption, setCaption] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [error, setError] = useState("");
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const cropQueue = useRef<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchPhotos = async () => {
     try {
-      const token = getToken();
-      const res = await fetch(`${API_BASE}/gallery/`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setPhotos(data.results || data);
-      }
+      setPhotos(await getGalleryPhotos());
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : "Couldn't load photos");
     } finally {
       setLoading(false);
     }
@@ -58,11 +42,24 @@ export default function GalleryPage() {
     fetchPhotos();
   }, []);
 
+  // Each picked photo goes through the editor in turn before it's queued.
+  const nextToCrop = () => {
+    const [next, ...rest] = cropQueue.current;
+    cropQueue.current = rest;
+    setCropFile(next ?? null);
+  };
+
   const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedFiles((prev) => [...prev, ...files]);
-    const newPreviews = files.map((f) => URL.createObjectURL(f));
-    setPreviews((prev) => [...prev, ...newPreviews]);
+    cropQueue.current = Array.from(e.target.files || []);
+    e.target.value = "";
+    setError("");
+    nextToCrop();
+  };
+
+  const handleCropped = (file: File, url: string) => {
+    setSelectedFiles((prev) => [...prev, file]);
+    setPreviews((prev) => [...prev, url]);
+    nextToCrop();
   };
 
   const removeFile = (index: number) => {
@@ -76,46 +73,48 @@ export default function GalleryPage() {
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
     setUploading(true);
+    setError("");
 
-    const token = getToken();
-    try {
-      for (const file of selectedFiles) {
-        const formData = new FormData();
-        formData.append("image", file);
-        formData.append("caption", caption);
-        formData.append("is_active", "true");
-
-        await fetch(`${API_BASE}/gallery/`, {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: formData,
-        });
+    // Upload one by one; keep any that fail in the panel so they can be retried.
+    const failedFiles: File[] = [];
+    const failedPreviews: string[] = [];
+    const reasons: string[] = [];
+    for (const [i, file] of selectedFiles.entries()) {
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("caption", caption);
+      formData.append("is_active", "true");
+      try {
+        await uploadGalleryPhoto(formData);
+      } catch (err) {
+        failedFiles.push(file);
+        failedPreviews.push(previews[i]);
+        reasons.push(err instanceof Error ? err.message : "upload failed");
       }
+    }
 
-      // Reset
-      setSelectedFiles([]);
-      setPreviews([]);
+    setSelectedFiles(failedFiles);
+    setPreviews(failedPreviews);
+    if (failedFiles.length > 0) {
+      setError(
+        `${failedFiles.length} of ${selectedFiles.length} photos didn't upload (${[...new Set(reasons)].join("; ")}). They're still selected below — try again.`,
+      );
+    } else {
       setCaption("");
       setShowUpload(false);
-      fetchPhotos();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUploading(false);
     }
+    setUploading(false);
+    fetchPhotos();
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this photo?")) return;
-    const token = getToken();
+    setError("");
     try {
-      await fetch(`${API_BASE}/gallery/${id}/`, {
-        method: "DELETE",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await deleteGalleryPhoto(id);
       fetchPhotos();
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : "Couldn't delete that photo");
     }
   };
 
@@ -144,6 +143,12 @@ export default function GalleryPage() {
           Upload Photo
         </button>
       </div>
+
+      {error && (
+        <div style={{ backgroundColor: "#fef2f2", color: "#dc2626", fontSize: 13, padding: "10px 14px", borderRadius: 6, marginBottom: 20 }}>
+          {error}
+        </div>
+      )}
 
       {/* Upload Panel */}
       {showUpload && (
@@ -176,7 +181,7 @@ export default function GalleryPage() {
               Click to select photos
             </p>
             <p style={{ fontSize: 12, color: "#bbb" }}>
-              JPG, PNG up to 10MB each
+              You&apos;ll crop each photo before it&apos;s added
             </p>
           </div>
           <input
@@ -196,7 +201,7 @@ export default function GalleryPage() {
                   <img
                     src={src}
                     alt=""
-                    className="w-full aspect-square object-cover"
+                    className="w-full aspect-[4/5] object-cover"
                     style={{ borderRadius: 6 }}
                   />
                   <button
@@ -268,6 +273,7 @@ export default function GalleryPage() {
                 setSelectedFiles([]);
                 setPreviews([]);
                 setCaption("");
+                setError("");
               }}
               style={{
                 padding: "10px 20px",
@@ -316,7 +322,9 @@ export default function GalleryPage() {
                 />
                 <button
                   onClick={() => handleDelete(photo.id)}
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Delete photo"
+                  // Always visible on touch screens, which have no hover.
+                  className="absolute top-2 right-2 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                   style={{
                     backgroundColor: "rgba(0,0,0,0.6)",
                     border: "none",
@@ -335,6 +343,18 @@ export default function GalleryPage() {
           </div>
         )}
       </div>
+
+      {cropFile && (
+        <ImageCropper
+          file={cropFile}
+          aspectRatio={GALLERY_ASPECT}
+          onCancel={() => {
+            cropQueue.current = [];
+            setCropFile(null);
+          }}
+          onCropComplete={handleCropped}
+        />
+      )}
     </div>
   );
 }

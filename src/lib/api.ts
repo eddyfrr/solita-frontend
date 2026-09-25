@@ -313,6 +313,26 @@ export async function deleteProductImage(productSlug: string, imageId: number) {
   if (!res.ok) await throwApiError(res, "Failed to delete product image");
 }
 
+// ── Gallery ──
+
+export async function getGalleryPhotos() {
+  const res = await apiFetch("/gallery/");
+  if (!res.ok) throw new Error("Failed to fetch gallery photos");
+  const data = await res.json();
+  return data.results || data;
+}
+
+export async function uploadGalleryPhoto(data: FormData) {
+  const res = await apiFetch("/gallery/", { method: "POST", body: data });
+  if (!res.ok) await throwApiError(res, "Failed to upload photo");
+  return res.json();
+}
+
+export async function deleteGalleryPhoto(id: number) {
+  const res = await apiFetch(`/gallery/${id}/`, { method: "DELETE" });
+  if (!res.ok) await throwApiError(res, "Failed to delete photo");
+}
+
 // ── Bookings ──
 
 export async function getBookings(params?: Record<string, string>) {
