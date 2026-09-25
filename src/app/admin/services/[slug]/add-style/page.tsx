@@ -6,6 +6,7 @@ import { ArrowLeft, Upload, X, Plus, Clock, Banknote, Tag, Crop } from "lucide-r
 import Link from "next/link";
 import { createServiceStyle, uploadServiceStyleImage } from "@/lib/api";
 import { ImageCropper } from "@/components/ImageCropper";
+import { uploadExtraPhotos } from "@/lib/uploads";
 
 export default function AddStylePage() {
   const router = useRouter();
@@ -172,16 +173,12 @@ export default function AddStylePage() {
       }
 
       const created = await createServiceStyle(serviceSlug, body);
-      // Upload any additional carousel images
-      if (extraFiles.length > 0 && created?.slug) {
-        await Promise.all(
-          extraFiles.map((f, idx) => {
-            const fd = new FormData();
-            fd.append("image", f);
-            fd.append("sort_order", String(idx + 1));
-            return uploadServiceStyleImage(serviceSlug, created.slug, fd).catch(() => null);
-          }),
-        );
+      const photoError = created?.slug
+        ? await uploadExtraPhotos(extraFiles, (fd) => uploadServiceStyleImage(serviceSlug, created.slug, fd))
+        : "";
+      if (photoError) {
+        setError(`"${form.name}" was saved, but ${photoError} Open the style to add them again.`);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
       setSuccess(true);
       // Reset form for adding another

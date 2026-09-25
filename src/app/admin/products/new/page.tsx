@@ -7,6 +7,7 @@ import Link from "next/link";
 import { createProduct, getCategories, uploadProductImage } from "@/lib/api";
 import { useEffect } from "react";
 import { ImageCropper } from "@/components/ImageCropper";
+import { uploadExtraPhotos } from "@/lib/uploads";
 
 interface Category {
   id: number;
@@ -120,15 +121,14 @@ export default function NewProductPage() {
       if (selectedFile) formData.append("image", selectedFile);
 
       const created = await createProduct(formData);
-      if (extraFiles.length > 0 && created?.slug) {
-        await Promise.all(
-          extraFiles.map((f, idx) => {
-            const fd = new FormData();
-            fd.append("image", f);
-            fd.append("sort_order", String(idx + 1));
-            return uploadProductImage(created.slug, fd).catch(() => null);
-          }),
-        );
+      const photoError = created?.slug
+        ? await uploadExtraPhotos(extraFiles, (fd) => uploadProductImage(created.slug, fd))
+        : "";
+      if (photoError) {
+        // The product exists now; send the admin to its edit page to retry the photos.
+        sessionStorage.setItem("admin-flash", `Product saved, but ${photoError} You can add them again below.`);
+        router.push(`/admin/products/${created.slug}`);
+        return;
       }
       router.push("/admin/products");
     } catch (err) {

@@ -11,6 +11,7 @@ import {
   deleteServiceStyleImage,
 } from "@/lib/api";
 import { ImageCropper } from "@/components/ImageCropper";
+import { uploadExtraPhotos } from "@/lib/uploads";
 
 interface ExistingImage {
   id: number;
@@ -188,17 +189,23 @@ export default function EditStylePage() {
 
       const updated = await updateServiceStyle(serviceSlug, styleSlug, formData);
 
-      // Upload any newly cropped carousel images
-      if (extraFiles.length > 0) {
-        const targetSlug = updated?.slug || styleSlug;
-        await Promise.all(
-          extraFiles.map((f, idx) => {
-            const fd = new FormData();
-            fd.append("image", f);
-            fd.append("sort_order", String(existingImages.length + idx + 1));
-            return uploadServiceStyleImage(serviceSlug, targetSlug, fd).catch(() => null);
-          }),
-        );
+      const targetSlug = updated?.slug || styleSlug;
+      const photoError = await uploadExtraPhotos(
+        extraFiles,
+        (fd) => uploadServiceStyleImage(serviceSlug, targetSlug, fd),
+        existingImages.length,
+      );
+      if (photoError) {
+        // Stay here: show what failed, and refresh the gallery so the photos
+        // that did upload aren't queued (and uploaded) a second time.
+        setError(`Changes saved, but ${photoError} Try adding them again.`);
+        setExtraFiles([]);
+        setExtraPreviews([]);
+        const fresh = await getServiceStyle(serviceSlug, targetSlug).catch(() => null);
+        if (fresh) setExistingImages(fresh.images ?? []);
+        if (targetSlug !== styleSlug) router.replace(`/admin/services/${serviceSlug}/styles/${targetSlug}`);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
       }
 
       router.push("/admin/services");

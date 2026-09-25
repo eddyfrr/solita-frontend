@@ -4,7 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Upload, X } from "lucide-react";
 import Link from "next/link";
-import { getProduct, updateProduct, getCategories } from "@/lib/api";
+import {
+  getProduct,
+  updateProduct,
+  getCategories,
+  uploadProductImage,
+  deleteProductImage,
+} from "@/lib/api";
+import { ImageCropper } from "@/components/ImageCropper";
+import { ExtraPhotosManager, type ExtraPhoto } from "@/components/admin/ExtraPhotosManager";
 
 interface Category {
   id: number;
@@ -22,6 +30,8 @@ export default function EditProductPage() {
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [extraPhotos, setExtraPhotos] = useState<ExtraPhoto[]>([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -35,6 +45,14 @@ export default function EditProductPage() {
     in_stock: true,
     stock_quantity: "0",
   });
+
+  useEffect(() => {
+    const flash = sessionStorage.getItem("admin-flash");
+    if (flash) {
+      sessionStorage.removeItem("admin-flash");
+      setError(flash);
+    }
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -58,6 +76,7 @@ export default function EditProductPage() {
         if (product.image_url) {
           setPreview(product.image_url);
         }
+        setExtraPhotos(product.images ?? []);
       } else {
         setError("Product not found");
       }
@@ -71,10 +90,8 @@ export default function EditProductPage() {
 
   const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreview(URL.createObjectURL(file));
-    }
+    if (file) setCropFile(file);
+    e.target.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -207,6 +224,20 @@ export default function EditProductPage() {
             <input ref={fileRef} type="file" accept="image/*" onChange={handleFileSelected} style={{ display: "none" }} />
           </div>
 
+          {/* Carousel photos — saved as soon as they're added or removed */}
+          <div>
+            <label style={labelStyle}>More Photos</label>
+            <p style={{ fontSize: 12, color: "#999", marginBottom: 8 }}>
+              Shown in the product&apos;s photo carousel. Changes here save immediately.
+            </p>
+            <ExtraPhotosManager
+              photos={extraPhotos}
+              onChange={setExtraPhotos}
+              upload={(fd) => uploadProductImage(slug, fd)}
+              remove={(id) => deleteProductImage(slug, id)}
+            />
+          </div>
+
           {/* Name */}
           <div>
             <label style={labelStyle}>Name *</label>
@@ -289,6 +320,19 @@ export default function EditProductPage() {
           </button>
         </form>
       </div>
+
+      {cropFile && (
+        <ImageCropper
+          file={cropFile}
+          aspectRatio={4 / 3}
+          onCancel={() => setCropFile(null)}
+          onCropComplete={(cropped, url) => {
+            setSelectedFile(cropped);
+            setPreview(url);
+            setCropFile(null);
+          }}
+        />
+      )}
     </div>
   );
 }

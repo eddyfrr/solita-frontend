@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { createService, getServices } from "@/lib/api";
+import { ImageCropper } from "@/components/ImageCropper";
 import { useEffect } from "react";
 
 interface ExistingService {
@@ -21,6 +22,7 @@ export default function NewServicePage() {
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [existingServices, setExistingServices] = useState<ExistingService[]>([]);
 
   const [form, setForm] = useState({
@@ -52,10 +54,8 @@ export default function NewServicePage() {
 
   const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreview(URL.createObjectURL(file));
-    }
+    if (file) setCropFile(file);
+    e.target.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -275,6 +275,19 @@ export default function NewServicePage() {
           </button>
         </form>
       </div>
+
+      {cropFile && (
+        <ImageCropper
+          file={cropFile}
+          aspectRatio={16 / 9}
+          onCancel={() => setCropFile(null)}
+          onCropComplete={(cropped, url) => {
+            setSelectedFile(cropped);
+            setPreview(url);
+            setCropFile(null);
+          }}
+        />
+      )}
     </div>
   );
 }

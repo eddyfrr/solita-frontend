@@ -26,6 +26,28 @@ function clearTokens() {
   localStorage.removeItem("admin-user");
 }
 
+// ── Errors ──
+
+/**
+ * Throw with the API's own reason when there is one. DRF returns field errors
+ * as {"image": ["This photo is 12.4 MB; the limit is 10 MB."]}; showing that
+ * beats a bare "Failed to create product".
+ */
+async function throwApiError(res: Response, fallback: string): Promise<never> {
+  const body = await res.json().catch(() => null);
+  let detail = "";
+  if (body && typeof body === "object") {
+    detail = Object.entries(body as Record<string, unknown>)
+      .map(([field, msgs]) => {
+        const text = ([] as unknown[]).concat(msgs).join(" ");
+        return field === "detail" || field === "non_field_errors" ? text : `${field}: ${text}`;
+      })
+      .join(" · ");
+  }
+  if (res.status === 413) detail = "That photo is too large to upload.";
+  throw new Error(detail ? `${fallback} — ${detail}` : fallback);
+}
+
 // ── Fetch wrapper ──
 
 async function apiFetch(
@@ -138,7 +160,7 @@ export async function createProduct(data: FormData | Record<string, unknown>) {
     method: "POST",
     body: isForm ? data : JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create product");
+  if (!res.ok) await throwApiError(res, "Failed to create product");
   return res.json();
 }
 
@@ -148,13 +170,13 @@ export async function updateProduct(slug: string, data: FormData | Record<string
     method: "PATCH",
     body: isForm ? data : JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update product");
+  if (!res.ok) await throwApiError(res, "Failed to update product");
   return res.json();
 }
 
 export async function deleteProduct(slug: string) {
   const res = await apiFetch(`/products/${slug}/`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Failed to delete product");
+  if (!res.ok) await throwApiError(res, "Failed to delete product");
 }
 
 // ── Categories ──
@@ -170,7 +192,7 @@ export async function createCategory(data: Record<string, unknown>) {
     method: "POST",
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create category");
+  if (!res.ok) await throwApiError(res, "Failed to create category");
   return res.json();
 }
 
@@ -194,7 +216,7 @@ export async function createService(data: FormData | Record<string, unknown>) {
     method: "POST",
     body: isForm ? data : JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create service");
+  if (!res.ok) await throwApiError(res, "Failed to create service");
   return res.json();
 }
 
@@ -204,13 +226,13 @@ export async function updateService(slug: string, data: FormData | Record<string
     method: "PATCH",
     body: isForm ? data : JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update service");
+  if (!res.ok) await throwApiError(res, "Failed to update service");
   return res.json();
 }
 
 export async function deleteService(slug: string) {
   const res = await apiFetch(`/services/${slug}/`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Failed to delete service");
+  if (!res.ok) await throwApiError(res, "Failed to delete service");
 }
 
 // ── Service Styles ──
@@ -227,11 +249,7 @@ export async function createServiceStyle(serviceSlug: string, data: FormData | R
     method: "POST",
     body: isForm ? data : JSON.stringify(data),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const detail = typeof err === "object" ? Object.values(err).flat().join(", ") : "Failed to create style";
-    throw new Error(detail || "Failed to create style");
-  }
+  if (!res.ok) await throwApiError(res, "Failed to create style");
   return res.json();
 }
 
@@ -241,13 +259,13 @@ export async function updateServiceStyle(serviceSlug: string, styleSlug: string,
     method: "PATCH",
     body: isForm ? data : JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update style");
+  if (!res.ok) await throwApiError(res, "Failed to update style");
   return res.json();
 }
 
 export async function deleteServiceStyle(serviceSlug: string, styleSlug: string) {
   const res = await apiFetch(`/services/${serviceSlug}/styles/${styleSlug}/`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Failed to delete style");
+  if (!res.ok) await throwApiError(res, "Failed to delete style");
 }
 
 // ── Service Style Images (multi-image carousel) ──
@@ -261,7 +279,7 @@ export async function uploadServiceStyleImage(
     method: "POST",
     body: data,
   });
-  if (!res.ok) throw new Error("Failed to upload style image");
+  if (!res.ok) await throwApiError(res, "Failed to upload style image");
   return res.json();
 }
 
@@ -274,7 +292,7 @@ export async function deleteServiceStyleImage(
     `/services/${serviceSlug}/styles/${styleSlug}/images/${imageId}/`,
     { method: "DELETE" },
   );
-  if (!res.ok) throw new Error("Failed to delete style image");
+  if (!res.ok) await throwApiError(res, "Failed to delete style image");
 }
 
 // ── Product Images (multi-image carousel) ──
@@ -284,7 +302,7 @@ export async function uploadProductImage(productSlug: string, data: FormData) {
     method: "POST",
     body: data,
   });
-  if (!res.ok) throw new Error("Failed to upload product image");
+  if (!res.ok) await throwApiError(res, "Failed to upload product image");
   return res.json();
 }
 
@@ -292,7 +310,7 @@ export async function deleteProductImage(productSlug: string, imageId: number) {
   const res = await apiFetch(`/products/${productSlug}/images/${imageId}/`, {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error("Failed to delete product image");
+  if (!res.ok) await throwApiError(res, "Failed to delete product image");
 }
 
 // ── Bookings ──
