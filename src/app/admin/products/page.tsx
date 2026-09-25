@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Plus, Pencil, Trash2, Star } from "lucide-react";
 import { getProducts, deleteProduct } from "@/lib/api";
 
@@ -52,7 +53,7 @@ export default function ProductsPage() {
         <p style={{ fontSize: 13, color: "#999" }}>
           {products.length} product{products.length !== 1 ? "s" : ""}
         </p>
-        <a
+        <Link
           href="/admin/products/new"
           className="flex items-center gap-2 uppercase transition-opacity hover:opacity-90"
           style={{
@@ -67,7 +68,7 @@ export default function ProductsPage() {
         >
           <Plus className="h-4 w-4" />
           Add Product
-        </a>
+        </Link>
       </div>
 
       <div
@@ -146,13 +147,13 @@ export default function ProductsPage() {
                     </td>
                     <td style={{ padding: "10px 16px" }}>
                       <div className="flex items-center justify-end gap-1">
-                        <a
+                        <Link
                           href={`/admin/products/${p.slug}`}
                           className="hover:bg-gray-50 transition-colors"
                           style={{ padding: 6, borderRadius: 4, display: "inline-flex" }}
                         >
                           <Pencil className="h-4 w-4 text-gray-400" />
-                        </a>
+                        </Link>
                         <button
                           onClick={() => handleDelete(p.slug, p.name)}
                           className="hover:bg-red-50 transition-colors"

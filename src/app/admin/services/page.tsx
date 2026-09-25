@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Plus, Pencil, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { getServices, deleteService, deleteServiceStyle } from "@/lib/api";
 
@@ -85,7 +86,7 @@ export default function ServicesPage() {
         <p style={{ fontSize: 13, color: "#999" }}>
           {services.length} service{services.length !== 1 ? "s" : ""}
         </p>
-        <a
+        <Link
           href="/admin/services/new"
           className="flex items-center gap-2 uppercase transition-opacity hover:opacity-90"
           style={{
@@ -100,7 +101,7 @@ export default function ServicesPage() {
         >
           <Plus className="h-4 w-4" />
           Add Service
-        </a>
+        </Link>
       </div>
 
       {loading ? (
@@ -173,12 +174,12 @@ export default function ServicesPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <a
+                    <Link
                       href={`/admin/services/${service.slug}`}
                       style={{ padding: 6, display: "inline-flex" }}
                     >
                       <Pencil className="h-4 w-4 text-gray-400" />
-                    </a>
+                    </Link>
                     <button
                       onClick={() => handleDeleteService(service.slug, service.name)}
                       style={{ padding: 6, border: "none", cursor: "pointer", background: "none" }}
@@ -273,13 +274,13 @@ export default function ServicesPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
-                            <a
+                            <Link
                               href={`/admin/services/${service.slug}/styles/${style.slug}`}
                               style={{ padding: 6, display: "inline-flex" }}
                               title="Edit style"
                             >
                               <Pencil className="h-3.5 w-3.5 text-gray-400" />
-                            </a>
+                            </Link>
                             <button
                               onClick={() => handleDeleteStyle(service.slug, style.slug, style.name)}
                               style={{ padding: 6, border: "none", cursor: "pointer", background: "none" }}
@@ -291,14 +292,14 @@ export default function ServicesPage() {
                       ))
                     )}
                     <div style={{ padding: "10px 20px 10px 36px" }}>
-                      <a
+                      <Link
                         href={`/admin/services/${service.slug}/add-style`}
                         className="flex items-center gap-1.5 text-[#8B5E3C] hover:underline"
                         style={{ fontSize: 13 }}
                       >
                         <Plus className="h-3.5 w-3.5" />
                         Add Style
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 )}
