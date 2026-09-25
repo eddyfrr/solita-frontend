@@ -1,8 +1,8 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useState } from "react";
-import { readCookieLang } from "@/lib/language";
+import { useEffect } from "react";
+import { useCookieLang } from "@/lib/language";
 
 // Google Translate widget — translates the entire visible page (including
 // DB-driven content) in-place. We hide its default banner and drive language
@@ -39,9 +39,10 @@ declare global {
 }
 
 export function GoogleTranslate() {
-  // Undefined until we've read the cookie on the client. Rendering the script
-  // is deliberately deferred past hydration so it can never block first paint.
-  const [translating, setTranslating] = useState(false);
+  // "EN" on the server and during hydration, so the script is never in the
+  // server HTML and can't block first paint; it mounts right after hydration
+  // for visitors whose cookie asks for Swahili.
+  const translating = useCookieLang() !== "EN";
 
   useEffect(() => {
     window.googleTranslateElementInit = () => {
@@ -55,8 +56,6 @@ export function GoogleTranslate() {
         "google_translate_element",
       );
     };
-
-    if (readCookieLang() !== "EN") setTranslating(true);
   }, []);
 
   return (

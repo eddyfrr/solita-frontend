@@ -1,23 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { AdminSidebar } from "./AdminSidebar";
 import { isAuthenticated, getUser } from "@/lib/api";
 
+const noSubscribe = () => () => {};
+
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [ready, setReady] = useState(false);
+  // Tokens live in localStorage: false on the server and during hydration,
+  // the real answer right after.
+  const ready = useSyncExternalStore(noSubscribe, isAuthenticated, () => false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push("/admin/login");
-    } else {
-      setReady(true);
-    }
+    // Check storage directly: `ready` is still false during the hydration pass.
+    if (!isAuthenticated()) router.push("/admin/login");
   }, [router]);
 
   if (!ready) {

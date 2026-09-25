@@ -10,7 +10,6 @@ import { XCircle } from "lucide-react";
 function FailedContent() {
   const params = useSearchParams();
   const type = params.get("type") || "booking";
-  const id = params.get("id");
 
   return (
     <div

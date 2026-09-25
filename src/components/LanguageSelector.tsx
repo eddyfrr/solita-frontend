@@ -1,14 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { LANGS, type LangCode, readCookieLang, applySiteLang } from "@/lib/language";
+import { LANGS, applySiteLang, useCookieLang } from "@/lib/language";
 
 export function LanguageSelector() {
-  const [active, setActive] = useState<LangCode>("EN");
-
-  useEffect(() => {
-    setActive(readCookieLang());
-  }, []);
+  const active = useCookieLang();
 
   const onPick = (lang: typeof LANGS[number]) => {
     if (lang.code === active) return;

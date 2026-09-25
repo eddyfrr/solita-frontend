@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Check, X, Clock, CheckCircle } from "lucide-react";
 import { getBookings, confirmBooking, cancelBooking, completeBooking, markBookingPaid } from "@/lib/api";
 
@@ -36,7 +36,7 @@ export default function BookingsPage() {
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       const params: Record<string, string> = {};
       if (filter !== "all") params.status = filter;
@@ -47,11 +47,11 @@ export default function BookingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
     fetchBookings();
-  }, [filter]);
+  }, [fetchBookings]);
 
   const handleAction = async (id: number, action: "confirm" | "cancel" | "complete" | "paid") => {
     try {

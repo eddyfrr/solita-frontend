@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, Heart, ShoppingBag, Menu, X, ChevronDown } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
-import { LANGS, readCookieLang, applySiteLang } from "@/lib/language";
+import { LANGS, applySiteLang, useCookieLang } from "@/lib/language";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -23,11 +23,7 @@ export function Header() {
   const [prefsOpen, setPrefsOpen] = useState(false);
   const { totalItems } = useCart();
   const { currency, setCurrency, currencies } = useCurrency();
-  const [activeLang, setActiveLang] = useState<"EN" | "SW">("EN");
-
-  useEffect(() => {
-    setActiveLang(readCookieLang());
-  }, []);
+  const activeLang = useCookieLang();
 
   return (
     <>

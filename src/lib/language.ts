@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from "react";
+
 // Shared Google Translate language helpers.
 // Language is driven by the `googtrans` cookie that the Google Translate widget
 // reads on page load. Both the desktop side-rail (<LanguageSelector />) and the
@@ -18,6 +20,18 @@ export function readCookieLang(): LangCode {
   // Cookie format is "/<src>/<dst>" e.g. "/en/sw"
   const dst = decoded.split("/").pop();
   return dst === "sw" ? "SW" : "EN";
+}
+
+const noSubscribe = () => () => {};
+
+/**
+ * The visitor's language, read from the googtrans cookie. "EN" on the server
+ * and during hydration, the cookie's value right after — with no effect or
+ * extra state. The cookie only changes through applySiteLang(), which reloads,
+ * so there is nothing to subscribe to.
+ */
+export function useCookieLang(): LangCode {
+  return useSyncExternalStore(noSubscribe, readCookieLang, () => "EN");
 }
 
 function writeCookieLang(googCode: string) {
