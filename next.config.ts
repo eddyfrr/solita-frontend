@@ -22,8 +22,10 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline' https://translate.googleapis.com https://www.gstatic.com",
   "img-src 'self' data: blob: https://res.cloudinary.com https://*.gstatic.com https://*.google.com https://translate.googleapis.com",
   "font-src 'self' data:",
-  `connect-src 'self' ${apiOrigin} https://open.er-api.com https://api.exchangerate.host https://translate.googleapis.com`,
-  "frame-src https://translate.google.com",
+  // translate-pa.googleapis.com serves the translated text; Translate also
+  // creates a same-origin frame (both seen in report-only on Swahili pages).
+  `connect-src 'self' ${apiOrigin} https://open.er-api.com https://api.exchangerate.host https://translate.googleapis.com https://translate-pa.googleapis.com`,
+  "frame-src 'self' https://translate.google.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "object-src 'none'",
