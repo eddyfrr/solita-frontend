@@ -149,50 +149,57 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryDelayRef = useRef(INITIAL_RETRY_DELAY);
 
-  const loadRates = useCallback(async (isRetry = false) => {
-    // Check short-lived cache first (skip on retry — we want fresh)
-    if (!isRetry) {
-      const cached = getCachedRates();
-      if (cached) {
-        setRates(cached);
+  useEffect(() => {
+    // Set on unmount so a pending fetch or retry can't update state afterwards.
+    let stopped = false;
+
+    // A plain function declaration, so the retry timer below can call it
+    // recursively (a useCallback that referenced itself did so before it was declared).
+    async function loadRates(isRetry = false) {
+      // Check short-lived cache first (skip on retry — we want fresh)
+      if (!isRetry) {
+        const cached = getCachedRates();
+        if (cached) {
+          setRates(cached);
+          setRatesLoaded(true);
+          retryDelayRef.current = INITIAL_RETRY_DELAY; // reset backoff
+          return;
+        }
+      }
+
+      // Fetch fresh rates
+      const freshRates = await fetchRates();
+      if (stopped) return;
+      if (freshRates) {
+        setRates(freshRates);
         setRatesLoaded(true);
-        retryDelayRef.current = INITIAL_RETRY_DELAY; // reset backoff
-        return;
+        saveCachedRates(freshRates);
+        retryDelayRef.current = INITIAL_RETRY_DELAY; // reset backoff on success
+      } else {
+        // All APIs failed — keep whatever rates we have (display stays smooth)
+        // but schedule a retry with exponential backoff so we keep trying
+        setRatesLoaded(true);
+        const delay = retryDelayRef.current;
+        retryDelayRef.current = Math.min(delay * 2, MAX_RETRY_DELAY);
+        retryRef.current = setTimeout(() => loadRates(true), delay);
       }
     }
 
-    // Fetch fresh rates
-    const freshRates = await fetchRates();
-    if (freshRates) {
-      setRates(freshRates);
-      setRatesLoaded(true);
-      saveCachedRates(freshRates);
-      retryDelayRef.current = INITIAL_RETRY_DELAY; // reset backoff on success
-    } else {
-      // All APIs failed — keep whatever rates we have (display stays smooth)
-      // but schedule a retry with exponential backoff so we keep trying
-      setRatesLoaded(true);
-      const delay = retryDelayRef.current;
-      retryDelayRef.current = Math.min(delay * 2, MAX_RETRY_DELAY);
-      retryRef.current = setTimeout(() => loadRates(true), delay);
-    }
-  }, []);
-
-  useEffect(() => {
     // Fetch immediately on mount
     loadRates();
 
-    // Auto-refresh every 2 minutes
+    // Refresh every REFRESH_INTERVAL (1 hour)
     intervalRef.current = setInterval(() => {
       try { localStorage.removeItem(CACHE_KEY); } catch { /* */ }
       loadRates();
     }, REFRESH_INTERVAL);
 
     return () => {
+      stopped = true;
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (retryRef.current) clearTimeout(retryRef.current);
     };
-  }, [loadRates]);
+  }, []);
 
   const setCurrency = useCallback((code: CurrencyCode) => {
     setCurrencyState(code);
