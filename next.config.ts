@@ -1,7 +1,54 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV !== "production";
+
+// The browser talks to the Django API directly (admin, checkout), so its
+// origin has to be allowed in connect-src. Derived from the same env var the
+// client uses, so moving the backend doesn't silently break the policy.
+const apiOrigin = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api").origin;
+  } catch {
+    return "";
+  }
+})();
+
+// Google Translate (loaded only for non-English visitors) pulls scripts,
+// styles and an iframe from Google. Next's own inline bootstrap scripts need
+// 'unsafe-inline' until we move to nonces.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://translate.google.com https://translate.googleapis.com https://www.gstatic.com`,
+  "style-src 'self' 'unsafe-inline' https://translate.googleapis.com https://www.gstatic.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://*.gstatic.com https://*.google.com https://translate.googleapis.com",
+  "font-src 'self' data:",
+  `connect-src 'self' ${apiOrigin} https://open.er-api.com https://api.exchangerate.host https://translate.googleapis.com`,
+  "frame-src https://translate.google.com",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "form-action 'self'",
+].join("; ");
+
+const securityHeaders = [
+  // Enforced now: these directives can't break the page's own resources.
+  { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'" },
+  // The full policy runs report-only first: violations show in the browser
+  // console without blocking anything. Promote it to the enforced header once
+  // a few days of real traffic (incl. Google Translate) show it clean.
+  { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicy },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+];
+
 const nextConfig: NextConfig = {
   output: "standalone",
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
   images: {
     // AVIF first, WebP as the fallback. Next only served WebP before, and on a
     // product grid this is where nearly all the page weight is. Browsers that
