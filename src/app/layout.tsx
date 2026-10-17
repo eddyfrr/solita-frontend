@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Jost, Playfair_Display } from "next/font/google";
+import Script from "next/script";
 import { CartProvider } from "@/context/CartContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { CurrencySelector } from "@/components/CurrencySelector";
@@ -124,6 +125,8 @@ export default function RootLayout({
             <GoogleTranslate />
           </CartProvider>
         </CurrencyProvider>
+        {/* Watchtower: error, page speed and visitor monitoring */}
+        <Script src="https://watch.jewelleryboxtz.com/sdk.js" data-key="wtp_W_aZcAn_oRFNmoF7NC6ZrvZE" data-release="1.0.0" strategy="afterInteractive" />
       </body>
     </html>
   );

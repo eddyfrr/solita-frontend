@@ -15,16 +15,17 @@ const apiOrigin = (() => {
 
 // Google Translate (loaded only for non-English visitors) pulls scripts,
 // styles and an iframe from Google. Next's own inline bootstrap scripts need
-// 'unsafe-inline' until we move to nonces.
+// 'unsafe-inline' until we move to nonces. Watchtower (Edmund's monitoring
+// portal) serves its script from and receives data at its own origin.
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://translate.google.com https://translate.googleapis.com https://www.gstatic.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://translate.google.com https://translate.googleapis.com https://www.gstatic.com https://watch.jewelleryboxtz.com`,
   "style-src 'self' 'unsafe-inline' https://translate.googleapis.com https://www.gstatic.com",
   "img-src 'self' data: blob: https://res.cloudinary.com https://*.gstatic.com https://*.google.com https://translate.googleapis.com",
   "font-src 'self' data:",
   // translate-pa.googleapis.com serves the translated text; Translate also
   // creates a same-origin frame (both seen in report-only on Swahili pages).
-  `connect-src 'self' ${apiOrigin} https://open.er-api.com https://api.exchangerate.host https://translate.googleapis.com https://translate-pa.googleapis.com`,
+  `connect-src 'self' ${apiOrigin} https://open.er-api.com https://api.exchangerate.host https://translate.googleapis.com https://translate-pa.googleapis.com https://watch.jewelleryboxtz.com`,
   "frame-src 'self' https://translate.google.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
